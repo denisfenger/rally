@@ -1,0 +1,478 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Rally site: landing page + legal pages (privacy, terms, support,
+   impressum). The live board (board/) carries its own inline styles so it
+   stays a single self-contained file.
+
+   The visual system is the app's own token set (STYLE_GUIDE.md): chalk
+   light ground and court-night dark ground, court blue for "us" and clay
+   for "them" (load-bearing semantics, never decorative), the optic ball
+   only ever as the serve indicator. Dark leads marketing, so the landing
+   opens dark and alternates; the legal pages stay on the light ground
+   because they are read, not scanned.
+
+   The watch and phone screens on the landing are drawn in HTML from the
+   real token values, so nothing here can go stale against a screenshot.
+   CONTENT RULE: whenever app features change, the landing changes in the
+   same round.
+
+   NO EXTERNAL REQUESTS. Fonts are the system stack (STYLE_GUIDE names
+   Archivo for marketing surfaces; hotlinking fonts.googleapis.com would
+   send every visitor's IP to Google, which a German company serving an
+   Impressum must not do, LG Muenchen I, 3 O 17493/20; a self-hosted OFL
+   file would be the compliant way to bring Archivo back later).
+   ───────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --wrap: 760px;
+  --wrapwide: 1120px;
+  --pad: clamp(1.25rem, 4vw, 3rem);
+
+  /* Light (chalk) tokens, STYLE_GUIDE.md */
+  --ground: #F4F7F9;
+  --surface: #FFFFFF;
+  --ink: #16232E;
+  --ink-soft: #45586A;
+  --ink-faint: #5A6E80;
+  --line: #D5DEE6;
+  --us: #1A66C7;
+  --them: #C75A28;
+  --them-ink: #B04A20;
+  --serve: #B7C821;
+  --fresh: #2E8B5A;
+  --us-chip: rgba(26, 102, 199, 0.12);
+  --them-chip: rgba(199, 90, 40, 0.12);
+
+  /* Dark (court night) tokens */
+  --d-ground: #0B1622;
+  --d-surface: #101E2D;
+  --d-ink: #E7EEF4;
+  --d-ink-soft: #A7B8C7;
+  --d-ink-faint: #74879A;
+  --d-line: #22374B;
+  --d-us: #5B96E8;
+  --d-them: #E08350;
+  --d-serve: #D9E44A;
+  --d-fresh: #4EA97C;
+  --d-us-chip: rgba(91, 150, 232, 0.16);
+  --d-them-chip: rgba(224, 131, 80, 0.16);
+}
+
+/* A dark band swaps the working tokens, so every component reads the
+   same variable names on either ground. */
+.dark {
+  --ground: var(--d-ground);
+  --surface: var(--d-surface);
+  --ink: var(--d-ink);
+  --ink-soft: var(--d-ink-soft);
+  --ink-faint: var(--d-ink-faint);
+  --line: var(--d-line);
+  --us: var(--d-us);
+  --them: var(--d-them);
+  --them-ink: var(--d-them);
+  --serve: var(--d-serve);
+  --fresh: var(--d-fresh);
+  --us-chip: var(--d-us-chip);
+  --them-chip: var(--d-them-chip);
+}
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--ground);
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; }
+p { margin: 0 0 1rem; }
+
+/* The court-sides mark, inline SVG: the fills follow the ground. */
+.mark .m-us { fill: var(--us); }
+.mark .m-them { fill: var(--them); }
+
+/* ── Bands and wraps ─────────────────────────────────────────────────── */
+.band {
+  padding: clamp(3.5rem, 8vw, 6rem) var(--pad);
+  background: var(--ground);
+  color: var(--ink);
+}
+.band.tight { padding-top: clamp(2.5rem, 5vw, 4rem); padding-bottom: clamp(2.5rem, 5vw, 4rem); }
+.wrap { max-width: var(--wrap); margin: 0 auto; }
+.wrap.wide { max-width: var(--wrapwide); }
+.split {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center;
+}
+.split.flip > :first-child { order: 2; }
+@media (max-width: 820px) {
+  .split { grid-template-columns: 1fr; }
+  .split.flip > :first-child { order: 0; }
+}
+
+/* ── Brand row, type ─────────────────────────────────────────────────── */
+.brandrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+  color: inherit;
+}
+.brandrow .mark { width: 40px; height: 40px; }
+.brandrow .n {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  text-transform: lowercase;
+  color: var(--ink);
+}
+h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0;
+  font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+  text-wrap: balance;
+}
+h2 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+  font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+  text-wrap: balance;
+}
+h3 { font-size: 1.1rem; margin: 0.2rem 0 0.5rem; letter-spacing: -0.01em; }
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+}
+.lead {
+  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 34em;
+  margin: 1.4rem 0 0;
+}
+.lead .us { color: var(--us); font-weight: 600; }
+.lead .them { color: var(--them-ink); font-weight: 600; }
+.copy { color: var(--ink-soft); max-width: 36em; }
+.copy strong { color: var(--ink); font-weight: 600; }
+.note { font-size: 0.92rem; color: var(--ink-faint); margin: 1.2rem 0 0; max-width: 34em; }
+
+/* ── Calls to action ─────────────────────────────────────────────────── */
+.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.4rem; margin-top: 2rem; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--us); flex: none; }
+.pill.primary { background: var(--us); border-color: var(--us); color: #FFFFFF; }
+.quiet {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+}
+.quiet:hover { color: var(--ink); border-bottom-color: var(--ink-soft); }
+
+/* ── Cards, grids, chips ─────────────────────────────────────────────── */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+@media (max-width: 820px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.4rem 1.4rem 1.5rem;
+}
+.card p { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+.card .step {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--us);
+  margin-bottom: 0.4rem;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.4rem 0 0; }
+.chip {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.chip.on { background: var(--us); border-color: var(--us); color: #FFFFFF; }
+
+/* ── Watch mockup (drawn from the watch match screen contract) ───────── */
+.demo { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.demo .hint { font-size: 0.88rem; color: var(--ink-faint); margin: 0; text-align: center; }
+.watch { width: 232px; position: relative; }
+.watch .case {
+  background: #050A10;
+  border: 2px solid #1E2A36;
+  border-radius: 56px;
+  padding: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.watch .crown {
+  position: absolute;
+  right: -9px;
+  top: 78px;
+  width: 8px;
+  height: 34px;
+  border-radius: 4px;
+  background: #1E2A36;
+}
+.watch .button {
+  position: absolute;
+  right: -7px;
+  top: 128px;
+  width: 6px;
+  height: 46px;
+  border-radius: 3px;
+  background: #1E2A36;
+}
+.watch .screen {
+  background: #000000;
+  border-radius: 44px;
+  padding: 22px 12px 14px;
+  color: var(--d-ink);
+  position: relative;
+  min-height: 236px;
+}
+.watch .rules {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--d-ink-faint);
+  text-align: center;
+  margin: 0 0 8px;
+  text-transform: lowercase;
+}
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tile {
+  position: relative;
+  height: 96px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease;
+}
+.tile:active { transform: scale(0.97); }
+.tile.us { background: var(--d-us-chip); color: var(--d-us); }
+.tile.them { background: var(--d-them-chip); color: var(--d-them); }
+.tile .tag {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d-ink-soft);
+  visibility: hidden;
+}
+.tile.won .tag { visibility: visible; }
+.ball {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--d-serve);
+  display: none;
+}
+.tile.serving .ball { display: block; }
+.watch .ball { top: 10px; }
+.ball.left { left: 10px; }
+.ball.right { right: 10px; }
+.mini {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+  min-height: 34px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.mini .col { display: grid; gap: 1px; text-align: center; line-height: 1.25; }
+.mini .a { color: var(--d-us); }
+.mini .b { color: var(--d-them); }
+.mini .live { color: var(--d-ink); }
+.mini .dim { color: var(--d-ink-faint); }
+.watch .undo {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--d-ink-faint);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.watch .undo svg { width: 16px; height: 16px; }
+.watch .undo:active { color: var(--d-ink); }
+
+/* ── Phone mockup (the courtside Board, portrait) ────────────────────── */
+.phone {
+  width: 250px;
+  margin: 0 auto;
+  background: #050A10;
+  border: 2px solid #1E2A36;
+  border-radius: 40px;
+  padding: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+.phone .screen {
+  border-radius: 32px;
+  background: var(--d-ground);
+  color: var(--d-ink);
+  padding: 44px 14px 20px;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+.phone .notch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 84px;
+  height: 22px;
+  margin-left: -42px;
+  border-radius: 12px;
+  background: #050A10;
+}
+.phone .sport {
+  font-size: 11px;
+  color: var(--d-ink-faint);
+  text-align: center;
+  margin: 0 0 2px;
+  letter-spacing: 0.02em;
+}
+.ptile {
+  position: relative;
+  height: 148px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.ptile.us { background: var(--d-us-chip); color: var(--d-us); }
+.ptile.them { background: var(--d-them-chip); color: var(--d-them); }
+.ptile .lbl {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--d-ink-faint);
+}
+.ptile .pts {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.ptile .ball.top { top: 10px; }
+.ptile .ball.bottom { bottom: 10px; }
+.ptile.serving .ball { display: block; }
+.phone .mini { margin-top: 2px; font-size: 15px; }
+.phone .status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--d-ink-faint);
+  margin-top: auto;
+}
+.phone .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--d-fresh); }
+.phone .status.off .dot { background: var(--d-ink-faint); }
+
+/* ── Document pages ──────────────────────────────────────────────────── */
+.pagehead { padding: clamp(2.5rem, 7vw, 5rem) var(--pad) clamp(1.5rem, 4vw, 2.5rem); }
+.pagehead .brandrow { margin-bottom: 2.2rem; }
+.pagehead h1 { font-size: clamp(1.9rem, 5vw, 2.7rem); }
+.stamp { margin: 1rem 0 0; color: var(--ink-faint); font-size: 0.95rem; }
+.stamp a { color: var(--us); text-decoration: none; }
+.stamp a:hover { text-decoration: underline; }
+.doc { padding: 0 var(--pad) clamp(4rem, 9vw, 6rem); }
+.prose { font-size: 16px; line-height: 1.65; }
+.prose h1.section { font-size: clamp(1.6rem, 4vw, 2.1rem); margin: 0 0 0.3rem; }
+.prose h2 { font-size: 1.25rem; margin: 2.4rem 0 0.6rem; letter-spacing: -0.01em; }
+.prose p, .prose li { color: var(--ink-soft); }
+.prose strong { color: var(--ink); font-weight: 600; }
+.prose ul { padding-left: 22px; margin: 0.6rem 0 1rem; }
+.prose li { margin: 0.35rem 0; }
+.prose a { color: var(--us); text-decoration: none; }
+.prose a:hover { text-decoration: underline; }
+.prose .updated { color: var(--ink-faint); font-size: 0.92rem; margin: 0 0 1.8rem; }
+.callout, .contactcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1.5rem;
+}
+.callout p:last-child, .contactcard p:last-child { margin-bottom: 0; }
+.divider { border: 0; border-top: 1px solid var(--line); margin: 4rem 0 2.5rem; }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+footer {
+  background: var(--ground);
+  color: var(--ink-soft);
+  padding: 3rem var(--pad) 3.5rem;
+  border-top: 1px solid var(--line);
+}
+footer .wrap { max-width: var(--wrapwide); }
+footer nav { display: flex; flex-wrap: wrap; gap: 0.6rem 1.5rem; margin: 1.4rem 0 1.2rem; }
+footer nav a { color: var(--ink-soft); text-decoration: none; }
+footer nav a:hover { color: var(--ink); }
+footer .fine { font-size: 0.88rem; color: var(--ink-faint); margin: 0.3rem 0 0; }
+footer .fine a { color: var(--ink-soft); text-decoration: none; }
+footer .fine a:hover { color: var(--ink); }
+
+/* Hero brand row spacing (landing only). */
+.hero .brandrow { margin-bottom: 2.4rem; }

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- KEPT OUT OF SEARCH ON PURPOSE, until the app is released. See index.html. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rally privacy policy</title>
+<meta name="description" content="How Rally handles your data: match history stays on your device, live shares are deleted at match end, health data never leaves your watch.">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header class="pagehead">
+  <div class="wrap">
+    <a class="brandrow" href="../" aria-label="Rally home">
+      <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg>
+      <span class="n">rally</span>
+    </a>
+    <p class="eyebrow">Legal</p>
+    <h1>Rally privacy policy</h1>
+    <p class="stamp">Last updated 2 September 2026. Die deutsche Fassung steht <a href="#de">weiter unten</a>.</p>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap">
+    <div class="prose">
+
+  <p>Rally is a score keeper for racket and net sports, made by Fenger
+  Digital GmbH in Germany. It is built local first: your matches live on
+  your devices, not on our servers. That makes this policy short, and we
+  intend to keep it that way.</p>
+
+  <h2>The short version</h2>
+  <ul>
+    <li><strong>Your match history stays on your device.</strong> We cannot see it and we do not want to.</li>
+    <li><strong>Live sharing is ephemeral.</strong> While you share a match, our server holds only a join code and the current score. That row is deleted the moment the match ends.</li>
+    <li><strong>Health data never leaves your device.</strong> Heart rate and calories stay on your watch and phone.</li>
+    <li><strong>Purchases run through Apple and RevenueCat</strong> under a random identifier, without your name or email.</li>
+    <li><strong>No ads, no tracking, no data sales.</strong> Rally contains no advertising or tracking SDKs.</li>
+  </ul>
+
+  <h2>Who is responsible</h2>
+  <p>The controller under the EU General Data Protection Regulation (GDPR)
+  is Fenger Digital GmbH, Germany. For anything in this policy, write to
+  <a href="mailto:denis.fenger@softailed.com">denis.fenger@softailed.com</a>.
+  You will get an answer from a person.</p>
+
+  <h2>Match history: on your device only</h2>
+  <p>Scores, sports, rule settings and match duration are stored only in
+  the app on your iPhone, iPad and Apple Watch. Rally has no field for
+  player names or notes; the two sides are simply "us" and "them" (or
+  "Team A" and "Team B"). Nothing is uploaded to us. Your history is
+  included in your normal iOS device backup, which runs under your Apple
+  account on Apple's infrastructure, not ours. You can export your full
+  history at any time, free, in an open format. Deleting the app deletes
+  the history on that device, and Settings &gt; Reset app in Rally
+  deletes it in place when you choose "Reset and delete history".</p>
+
+  <h2>Live sharing: one row, then gone</h2>
+  <p>When you actively share a match, our server (Supabase, hosted in the
+  EU, region Frankfurt) stores exactly one row for it: the 6-digit join
+  code, the sport and the current score snapshot, meaning points, games,
+  sets and who serves. No names, no account, no match history and no event log are
+  uploaded. The row is deleted when you end the match, and expires
+  automatically no later than 24 hours after it was created.</p>
+  <p>People who follow your match need no account. We do not record who
+  watched. Legal basis: performance of the sharing feature you actively
+  start (art. 6(1)(b) GDPR).</p>
+
+  <h2>Abuse protection: hashed, transient</h2>
+  <p>To keep the free sharing service available, its endpoints are rate
+  limited per IP address. The IP address is hashed (SHA-256) before it is
+  stored, so raw IP addresses never reach our database, and the counters
+  are deleted automatically within about an hour. Our hosting provider additionally processes
+  connection data such as IP addresses for the technical delivery of the
+  service, as every host does. Legal basis: our legitimate interest in
+  running a stable and abuse-free service (art. 6(1)(f) GDPR).</p>
+
+  <h2>Health data: never leaves the device</h2>
+  <p>With your permission, Rally records your match as a workout through
+  Apple HealthKit so it counts toward your Activity rings, and shows your
+  heart rate and calories during play. These numbers stay on your watch
+  and phone. They are never uploaded to our servers, never part of a live
+  share, and never included in exports. You manage and delete them
+  in Apple Health. We never use HealthKit data for marketing and never
+  disclose it to third parties. If you decline Health access, scoring
+  works normally.</p>
+
+  <h2>Purchases: Apple pays, RevenueCat counts</h2>
+  <p>Rally Pro is bought through your Apple App Store account. Apple
+  processes the payment; we never see your payment details. To validate
+  purchases and unlock Pro across your devices we use RevenueCat, Inc.
+  (USA). RevenueCat receives your purchase history for Rally and a random
+  identifier generated in the app, not your name, email or Apple ID.
+  Transfers to RevenueCat are safeguarded by EU standard contractual
+  clauses. Legal basis: performance of the purchase contract
+  (art. 6(1)(b) GDPR).</p>
+
+  <h2>What we do not do</h2>
+  <p>Rally shows no ads, contains no advertising or cross-app tracking
+  SDKs, and sells no data. There are no user accounts at launch, so there
+  is no profile of you anywhere on our side.</p>
+
+  <h2>Your rights, and how deletion works here</h2>
+  <p>Under the GDPR you have the right to access, rectify, erase and
+  restrict the processing of your personal data, the right to data
+  portability and the right to object (art. 15 to 21 GDPR). You can also
+  complain to a data protection supervisory authority.</p>
+  <p>In practice, because Rally is local first, you hold the delete key
+  yourself: Settings &gt; Reset app or deleting the app removes your
+  history, an active share deletes itself when the match ends or
+  expires, and the hashed rate-limit counters are gone on their own
+  within about an hour. The free export is your
+  data portability. For the one thing that lives elsewhere, the purchase
+  record at RevenueCat, email us and we will have it deleted.</p>
+
+  <h2>Changes</h2>
+  <p>If Rally ever changes what it processes, for example if optional
+  accounts arrive with a future feature, this policy will be updated
+  before that feature ships and the date above will change.</p>
+
+  <hr class="divider" id="de">
+
+  <div lang="de">
+  <h1 class="section">Datenschutzerklärung für Rally</h1>
+  <p class="updated">Stand: 2. September 2026</p>
+
+  <p>Rally ist ein Punktezähler für Schläger- und Netzsportarten der
+  Fenger Digital GmbH. Die App ist lokal gebaut: Ihre Spiele liegen auf
+  Ihren Geräten, nicht auf unseren Servern. Deshalb ist diese Erklärung
+  kurz, und das soll so bleiben.</p>
+
+  <h2>Das Wichtigste in Kürze</h2>
+  <ul>
+    <li><strong>Ihr Spielverlauf bleibt auf Ihrem Gerät.</strong> Wir können ihn nicht einsehen.</li>
+    <li><strong>Live-Teilen ist flüchtig.</strong> Während Sie ein Spiel teilen, speichert unser Server nur den Beitrittscode und den aktuellen Spielstand. Diese Zeile wird beim Spielende gelöscht.</li>
+    <li><strong>Gesundheitsdaten verlassen Ihr Gerät nie.</strong> Herzfrequenz und Kalorien bleiben auf Watch und iPhone.</li>
+    <li><strong>Käufe laufen über Apple und RevenueCat</strong> unter einer zufälligen Kennung, ohne Name oder E-Mail.</li>
+    <li><strong>Keine Werbung, kein Tracking, kein Datenverkauf.</strong></li>
+  </ul>
+
+  <h2>Verantwortlicher</h2>
+  <p>Verantwortlicher im Sinne der DSGVO ist die Fenger Digital GmbH,
+  Deutschland. Für alle Anliegen rund um diese Erklärung erreichen Sie uns
+  unter <a href="mailto:denis.fenger@softailed.com">denis.fenger@softailed.com</a>.
+  Es antwortet ein Mensch.</p>
+
+  <h2>Spielverlauf: nur auf Ihrem Gerät</h2>
+  <p>Spielstände, Sportarten, Regeleinstellungen und Spieldauer werden
+  ausschließlich in der App auf Ihrem iPhone, iPad und Ihrer Apple Watch
+  gespeichert. Rally hat kein Feld für Spielernamen oder Notizen; die
+  beiden Seiten heißen schlicht „wir" und „Gegner" (oder „Team A" und
+  „Team B"). Nichts wird zu uns hochgeladen. Ihr Verlauf ist Teil Ihres
+  normalen iOS-Geräte-Backups, das unter Ihrem Apple-Konto auf Apples
+  Infrastruktur läuft. Sie können Ihren vollständigen Verlauf jederzeit
+  kostenlos in einem offenen Format exportieren. Löschen Sie die App, ist
+  der Verlauf auf diesem Gerät gelöscht; in Rally löscht ihn außerdem
+  Einstellungen &gt; App zurücksetzen, wenn Sie „Zurücksetzen und Verlauf
+  löschen" wählen.</p>
+
+  <h2>Live-Teilen: eine Zeile, dann weg</h2>
+  <p>Wenn Sie ein Spiel aktiv teilen, speichert unser Server (Supabase,
+  EU-Region Frankfurt) genau eine Zeile: den sechsstelligen Beitrittscode,
+  die Sportart und den aktuellen Spielstand, also Punkte, Spiele, Sätze
+  und Aufschlag.
+  Keine Namen, kein Konto, kein Spielverlauf und kein Ereignisprotokoll
+  werden hochgeladen. Die Zeile wird gelöscht, sobald Sie das Spiel
+  beenden, und verfällt spätestens 24 Stunden nach ihrer Erstellung
+  automatisch.</p>
+  <p>Wer Ihr Spiel mitverfolgt, braucht kein Konto. Wir speichern nicht,
+  wer zugesehen hat. Rechtsgrundlage: Erfüllung der von Ihnen aktiv
+  gestarteten Teilen-Funktion (Art. 6 Abs. 1 lit. b DSGVO).</p>
+
+  <h2>Missbrauchsschutz: gehasht und flüchtig</h2>
+  <p>Um den kostenlosen Teilen-Dienst verfügbar zu halten, sind seine
+  Endpunkte pro IP-Adresse ratenbegrenzt. Die IP-Adresse wird vor der
+  Speicherung gehasht (SHA-256), rohe IP-Adressen erreichen unsere
+  Datenbank also nie, und die Zähler werden innerhalb von etwa einer
+  Stunde automatisch gelöscht. Unser Hosting-Anbieter verarbeitet daneben Verbindungsdaten
+  wie IP-Adressen zur technischen Auslieferung des Dienstes.
+  Rechtsgrundlage: unser berechtigtes Interesse an einem stabilen,
+  missbrauchsfreien Dienst (Art. 6 Abs. 1 lit. f DSGVO).</p>
+
+  <h2>Gesundheitsdaten: verlassen das Gerät nie</h2>
+  <p>Mit Ihrer Erlaubnis zeichnet Rally Ihr Spiel über Apple HealthKit als
+  Training auf und zeigt während des Spiels Herzfrequenz und Kalorien.
+  Diese Werte bleiben auf Ihrer Watch und Ihrem iPhone. Sie werden nie auf
+  unsere Server hochgeladen, sind nie Teil eines geteilten Spiels und nie
+  Teil eines Exports. Verwalten und löschen können Sie
+  sie in Apple Health. Wir nutzen HealthKit-Daten nie für Marketing und
+  geben sie nie an Dritte weiter. Lehnen Sie den Health-Zugriff ab,
+  funktioniert das Zählen normal weiter.</p>
+
+  <h2>Käufe: Apple kassiert, RevenueCat zählt</h2>
+  <p>Rally Pro kaufen Sie über Ihr Apple-App-Store-Konto. Apple wickelt
+  die Zahlung ab; Ihre Zahlungsdaten sehen wir nie. Zur Kaufvalidierung
+  und zum Freischalten von Pro auf Ihren Geräten nutzen wir RevenueCat,
+  Inc. (USA). RevenueCat erhält Ihre Kaufhistorie für Rally und eine in
+  der App erzeugte zufällige Kennung, nicht Ihren Namen, Ihre E-Mail oder
+  Ihre Apple-ID. Die Übermittlung ist durch EU-Standardvertragsklauseln
+  abgesichert. Rechtsgrundlage: Vertragserfüllung
+  (Art. 6 Abs. 1 lit. b DSGVO).</p>
+
+  <h2>Was wir nicht tun</h2>
+  <p>Rally zeigt keine Werbung, enthält keine Werbe- oder Tracking-SDKs
+  und verkauft keine Daten. Es gibt zum Start keine Benutzerkonten, also
+  auch kein Profil von Ihnen auf unserer Seite.</p>
+
+  <h2>Ihre Rechte, und wie Löschen hier funktioniert</h2>
+  <p>Nach der DSGVO haben Sie das Recht auf Auskunft, Berichtigung,
+  Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und
+  Widerspruch (Art. 15 bis 21 DSGVO) sowie das Recht auf Beschwerde bei
+  einer Datenschutzaufsichtsbehörde.</p>
+  <p>Praktisch halten Sie den Löschschlüssel selbst in der Hand, weil
+  Rally lokal arbeitet: Einstellungen &gt; App zurücksetzen oder das
+  Löschen der App entfernt Ihren Verlauf, ein
+  aktives geteiltes Spiel löscht sich beim Spielende oder Ablauf selbst,
+  und die gehashten Zähler des Missbrauchsschutzes verschwinden von
+  allein innerhalb von etwa einer Stunde. Der kostenlose Export ist Ihre
+  Datenübertragbarkeit. Für den einen Datensatz außerhalb Ihres Geräts,
+  den Kaufdatensatz bei RevenueCat, genügt eine E-Mail an uns und wir
+  lassen ihn löschen.</p>
+
+  <h2>Änderungen</h2>
+  <p>Sollte sich ändern, was Rally verarbeitet, etwa wenn mit einer
+  künftigen Funktion optionale Konten eingeführt werden, aktualisieren
+  wir diese Erklärung, bevor die Funktion erscheint, und passen das Datum
+  oben an.</p>
+  </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="dark">
+  <div class="wrap">
+    <div class="brandrow">
+      <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg>
+      <span class="n">rally</span>
+    </div>
+    <nav aria-label="Legal">
+      <a href="../privacy/">Privacy policy</a>
+      <a href="../terms/">Terms of use</a>
+      <a href="../support/">Support</a>
+      <a href="../impressum/">Legal notice</a>
+    </nav>
+    <p class="fine">Questions? <a href="mailto:denis.fenger@softailed.com">denis.fenger@softailed.com</a></p>
+    <p class="fine">&copy; 2026 Fenger Digital GmbH</p>
+  </div>
+</footer>
+
+</body>
+</html>

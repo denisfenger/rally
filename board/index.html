@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<!-- Rally live scoreboard (static, GitHub Pages).
+     Followers are free and account-less by product law: this page needs no
+     login, loads NO external script or style, and stores nothing. It joins a
+     share through the share-join edge function (POST {code}) and then polls
+     share-state (POST {shareId}) over plain fetch: every 2.5 s, one request
+     in flight at a time, backing off to 10 s after three consecutive
+     failures, stopping on ended:true or 404 (the row is deleted at match
+     end), pausing while the tab is hidden and resuming on visibilitychange.
+     Request and response shapes: supabase/functions/share-join/index.ts and
+     supabase/functions/share-state/index.ts. share-state carries no per-IP
+     rate limit by design (a club's Wi-Fi is one address); share-join keeps
+     its 30 per 10 minutes against code guessing.
+     The anon key is public by design: it grants nothing, the table is
+     service-role-only and every mutation goes through edge functions.
+     The rendering is the scoreboard the app's Board and follow screen use:
+     blue left = the host's side, clay right = the other side, sets table,
+     serve dot, stale dot amber after 20 s without a successful poll.
+     The app links here through boardUrl() in src/links.ts; the URL shape is
+     board/?code=123456 and must stay stable. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rally live score</title>
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --ground: #0B1622;
+    --panel: #101E2E;
+    --line: #1C2C3E;
+    --text: #E8EEF5;
+    --muted: #7C8CA0;
+    --us: #5B96E8;
+    --them: #E08350;
+    --live: #4C9E6B;
+    --stale: #E0A830;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  #sport { font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: lowercase; }
+  #status { display: flex; align-items: center; gap: 8px; font-size: 13px;
+    color: var(--muted); }
+  #dot { width: 10px; height: 10px; border-radius: 50%;
+    background: var(--live); }
+  #dot.stale { background: var(--stale); }
+  #dot.off { background: var(--muted); }
+  main { flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 24px 16px;
+    gap: 28px; }
+  #banner { display: none; font-size: 15px; color: var(--muted);
+    letter-spacing: 0.06em; text-transform: uppercase; }
+  #banner.show { display: block; }
+  #score { display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 20px 6vw; max-width: 100%; }
+  .side { display: flex; flex-direction: column; align-items: center;
+    gap: 10px; min-width: 128px; }
+  /* Phones: the sets table drops under the two sides instead of pushing
+     them past the edge (five sets beside 64 px points do not fit in
+     360 px). The ::after item is the line break; the table takes the
+     next row, centered. */
+  @media (max-width: 480px) {
+    .side { min-width: 96px; }
+    #score::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
+    #setsTable { order: 3; }
+  }
+  .points { font-size: clamp(64px, 18vw, 148px); font-weight: 700;
+    line-height: 1; font-variant-numeric: tabular-nums; }
+  .side.a .points { color: var(--us); }
+  .side.b .points { color: var(--them); }
+  .sets-won { font-size: 15px; color: var(--muted); }
+  .sets-won b { color: var(--text); font-size: 17px; }
+  .serve { width: 12px; height: 12px; border-radius: 50%;
+    visibility: hidden; }
+  .side.a .serve { background: var(--us); }
+  .side.b .serve { background: var(--them); }
+  .side.serving .serve { visibility: visible; }
+  .winner-tag { font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); visibility: hidden; }
+  .side.won .winner-tag { visibility: visible; color: var(--text); }
+  #setsTable { border-collapse: collapse; }
+  #setsTable td { padding: 4px 12px; text-align: center; font-size: 20px;
+    font-variant-numeric: tabular-nums; border: 0; }
+  #setsTable tr.a td { color: var(--us); }
+  #setsTable tr.b td { color: var(--them); }
+  #setsTable td sup { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  #codeLabel { font-size: 13px; color: var(--muted);
+    letter-spacing: 0.14em; }
+  #joinForm { display: none; flex-direction: column; align-items: center;
+    gap: 16px; }
+  #joinForm.show { display: flex; }
+  #joinForm p { margin: 0; color: var(--muted); font-size: 15px; }
+  #joinForm input { background: var(--panel); border: 1px solid var(--line);
+    color: var(--text); font-size: 28px; letter-spacing: 0.3em;
+    text-align: center; width: 220px; padding: 12px 8px; border-radius: 10px;
+    font-variant-numeric: tabular-nums; }
+  #joinForm input:focus { outline: none; border-color: var(--us); }
+  #joinForm button { background: var(--us); color: #08111C; border: 0;
+    font-size: 16px; font-weight: 600; padding: 12px 32px;
+    border-radius: 10px; cursor: pointer; }
+  #joinError { color: var(--them); font-size: 14px; min-height: 18px;
+    margin: 0; }
+  #board { display: none; flex-direction: column; align-items: center;
+    gap: 28px; }
+  #board.show { display: flex; }
+</style>
+</head>
+<body>
+<header>
+  <div id="sport">rally</div>
+  <div id="status"><span id="statusText">live</span><span id="dot"></span></div>
+</header>
+<main>
+  <form id="joinForm">
+    <p>Enter the 6-digit code to watch a live match</p>
+    <input id="codeInput" inputmode="numeric" autocomplete="one-time-code"
+      maxlength="6" placeholder="000000" aria-label="join code">
+    <p id="joinError"></p>
+    <button type="submit">Watch</button>
+  </form>
+  <section id="board">
+    <div id="banner">match ended</div>
+    <div id="score">
+      <div class="side a" id="sideA">
+        <span class="winner-tag">winner</span>
+        <div class="points" id="pointsA">0</div>
+        <span class="serve"></span>
+        <div class="sets-won">sets <b id="setsA">0</b></div>
+      </div>
+      <table id="setsTable" aria-label="games by set">
+        <tr class="a" id="rowA"></tr>
+        <tr class="b" id="rowB"></tr>
+      </table>
+      <div class="side b" id="sideB">
+        <span class="winner-tag">winner</span>
+        <div class="points" id="pointsB">0</div>
+        <span class="serve"></span>
+        <div class="sets-won">sets <b id="setsB">0</b></div>
+      </div>
+    </div>
+    <div id="codeLabel"></div>
+  </section>
+</main>
+<script>
+(function () {
+  var SUPABASE_URL = "https://cdfssiiyuvdxsfgkjdxz.supabase.co";
+  var ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkZnNzaWl5dXZkeHNmZ2tqZHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNzM4ODIsImV4cCI6MjEwMzg0OTg4Mn0.ElGhVvNKSUzxaVgHNG6zeia6ozcsC4kx4JD7_DM5FBA";
+  var FN = SUPABASE_URL + "/functions/v1";
+  var CODE_RE = /^[1-9][0-9]{5}$/;
+
+  var POLL_MS = 2500;            // steady cadence
+  var POLL_SLOW_MS = 10000;      // after SLOW_AFTER consecutive failures
+  var SLOW_AFTER = 3;
+  var STALE_MS = 20000;          // amber dot without a successful poll
+
+  var el = function (id) { return document.getElementById(id); };
+  var shareId = null;
+  var curSeq = -1;
+  var lastOk = 0;                // time of the last successful join or poll
+  var ended = false;
+  var joined = false;
+  var inFlight = false;
+  var failures = 0;
+  var timer = null;
+
+  function showForm(message) {
+    el("board").classList.remove("show");
+    el("joinForm").classList.add("show");
+    el("joinError").textContent = message || "";
+    el("statusText").textContent = "waiting";
+    el("dot").className = "off";
+  }
+
+  el("joinForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = el("codeInput").value.trim();
+    if (!CODE_RE.test(v)) {
+      el("joinError").textContent = "The code is 6 digits";
+      return;
+    }
+    // Keeps the folder URL (board/?code=), the shape the app shares.
+    location.search = "?code=" + v;
+  });
+
+  function renderSnapshot(snap) {
+    var labels = snap.pointLabels || ["0", "0"];
+    el("pointsA").textContent = String(labels[0]);
+    el("pointsB").textContent = String(labels[1]);
+    el("setsA").textContent = String(snap.setsWonA || 0);
+    el("setsB").textContent = String(snap.setsWonB || 0);
+
+    var pairs = snap.gamesBySet || snap.setPairs || [];
+    var tbs = snap.tiebreaksBySet || [];
+    var rowA = el("rowA");
+    var rowB = el("rowB");
+    rowA.textContent = "";
+    rowB.textContent = "";
+    for (var i = 0; i < pairs.length; i++) {
+      var tdA = document.createElement("td");
+      var tdB = document.createElement("td");
+      tdA.textContent = String(pairs[i][0]);
+      tdB.textContent = String(pairs[i][1]);
+      var tb = tbs[i];
+      if (tb) {
+        var supA = document.createElement("sup");
+        supA.textContent = String(tb[0]);
+        tdA.appendChild(supA);
+        var supB = document.createElement("sup");
+        supB.textContent = String(tb[1]);
+        tdB.appendChild(supB);
+      }
+      rowA.appendChild(tdA);
+      rowB.appendChild(tdB);
+    }
+
+    el("sideA").classList.toggle("serving", !ended && snap.server === "A");
+    el("sideB").classList.toggle("serving", !ended && snap.server === "B");
+    el("sideA").classList.toggle("won", snap.winner === "A");
+    el("sideB").classList.toggle("won", snap.winner === "B");
+    if (snap.ended) markEnded();
+  }
+
+  function applySnapshot(seq, snap) {
+    if (typeof seq !== "number" || seq <= curSeq || !snap) return;
+    curSeq = seq;
+    renderSnapshot(snap);
+  }
+
+  function markEnded() {
+    if (ended) return;
+    ended = true;
+    clearTimeout(timer);
+    el("banner").classList.add("show");
+    el("statusText").textContent = "ended";
+    el("dot").className = "off";
+    el("sideA").classList.remove("serving");
+    el("sideB").classList.remove("serving");
+  }
+
+  function tickStaleness() {
+    if (ended || !joined) return;
+    var stale = Date.now() - lastOk > STALE_MS;
+    el("dot").className = stale ? "stale" : "";
+    el("statusText").textContent = stale ? "stale" : "live";
+  }
+
+  // One JSON POST to an edge function. Resolves {status, data}; data is
+  // null when the body is not JSON or the status is not 2xx. Rejects only
+  // on a network failure.
+  function post(path, body) {
+    return fetch(FN + path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: ANON_KEY,
+        Authorization: "Bearer " + ANON_KEY
+      },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      if (!res.ok) return { status: res.status, data: null };
+      return res.json().then(
+        function (data) { return { status: res.status, data: data }; },
+        function () { return { status: res.status, data: null }; }
+      );
+    });
+  }
+
+  function schedule(ms) {
+    clearTimeout(timer);
+    if (ended || !joined || document.hidden) return;
+    timer = setTimeout(poll, ms);
+  }
+
+  function poll() {
+    if (ended || !joined || inFlight || document.hidden) return;
+    inFlight = true;
+    post("/share-state", { shareId: shareId }).then(function (res) {
+      inFlight = false;
+      if (res.status === 404) {
+        // Row gone: the host ended the share or it expired.
+        markEnded();
+        return;
+      }
+      if (!res.data) {
+        failures += 1;
+        schedule(failures >= SLOW_AFTER ? POLL_SLOW_MS : POLL_MS);
+        return;
+      }
+      failures = 0;
+      lastOk = Date.now();
+      applySnapshot(res.data.seq, res.data.snapshot);
+      if (res.data.ended) markEnded();
+      schedule(POLL_MS);
+    }, function () {
+      inFlight = false;
+      failures += 1;
+      schedule(failures >= SLOW_AFTER ? POLL_SLOW_MS : POLL_MS);
+    });
+  }
+
+  function start(code) {
+    post("/share-join", { code: code }).then(function (res) {
+      if (res.status === 404) {
+        showForm("No live match with that code");
+        return;
+      }
+      if (res.status === 429) {
+        showForm("Too many attempts. Wait a few minutes and try again");
+        return;
+      }
+      if (!res.data) {
+        showForm("Could not reach the score service. Try again");
+        return;
+      }
+      joined = true;
+      shareId = res.data.shareId;
+      lastOk = Date.now();
+      el("joinForm").classList.remove("show");
+      el("board").classList.add("show");
+      el("sport").textContent = String(res.data.sport || "rally");
+      el("codeLabel").textContent = "code " + code;
+      el("dot").className = "";
+      el("statusText").textContent = "live";
+      applySnapshot(res.data.seq, res.data.snapshot);
+      setInterval(tickStaleness, 1000);
+      schedule(POLL_MS);
+    }, function () {
+      showForm("Could not reach the score service. Try again");
+    });
+  }
+
+  // Pause while hidden (no background polling), resume with an immediate
+  // poll when the tab comes back.
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      clearTimeout(timer);
+    } else if (joined && !ended) {
+      clearTimeout(timer);
+      poll();
+    }
+  });
+
+  var code = (new URLSearchParams(location.search).get("code") || "").trim();
+  if (CODE_RE.test(code)) {
+    start(code);
+  } else {
+    showForm(code ? "The code is 6 digits" : "");
+  }
+})();
+</script>
+</body>
+</html>

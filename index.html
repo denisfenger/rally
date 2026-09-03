@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- KEPT OUT OF SEARCH ON PURPOSE, until the app is released. Remove this tag
+     on every page (index, privacy, terms, support, impressum, board) to let
+     the site be indexed. A robots.txt in this repo would do NOTHING: crawlers
+     read robots.txt at the DOMAIN root (denisfenger.github.io/robots.txt),
+     which belongs to the user-site repo, not to this project page. The
+     per-page meta tag is the mechanism that works, and it does NOT make the
+     pages unreachable: the shipped app links privacy, terms and support, and
+     App Review has to be able to fetch them. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rally</title>
+<meta name="description" content="Rally is the watch-first score keeper for padel, tennis, pickleball, table tennis, badminton, squash and volleyball. Tap on the wrist to score; Rally keeps games, sets, serves and side switches straight.">
+<meta property="og:title" content="rally">
+<meta property="og:description" content="The watch-first score keeper for padel, tennis, pickleball, table tennis, badminton, squash and volleyball.">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 01 Hero: court night, the mark, the promise, the watch you can tap. -->
+<section class="band dark hero">
+  <div class="wrap wide split">
+    <div>
+      <a class="brandrow" href="./" aria-label="Rally home">
+        <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg>
+        <span class="n">rally</span>
+      </a>
+      <p class="eyebrow">For Apple Watch, iPhone and iPad</p>
+      <h1>Keep score from your wrist.</h1>
+      <p class="lead">Rally scores padel, tennis, pickleball, table tennis, badminton, squash and volleyball. One tap per point, <span class="us">your side</span> or <span class="them">theirs</span>; Rally keeps the games, sets, serves and side switches straight and records the workout.</p>
+      <div class="cta">
+        <!-- Swap this for Apple's official "Download on the App Store" badge
+             at release. Apple requires its own artwork; do not redraw it. -->
+        <span class="pill"><span class="dot"></span>Coming to the App Store</span>
+        <a class="quiet" href="board/">Watching a shared match? Enter your code</a>
+      </div>
+      <p class="note">No account needed to play. Following a shared match is always free.</p>
+    </div>
+
+    <div class="demo">
+      <!-- The watch match screen, drawn from the STYLE_GUIDE contract: score
+           tiles are the buttons (left = us in court blue, right = them in
+           clay), the optic ball on the serving tile anchored to the serve
+           court side, sets as the stacked mini-table, the return arrow in
+           the bottom corner. It is a working padel scorer (golden point,
+           best of three, tiebreak at 6-6). -->
+      <div class="watch" aria-label="Rally on Apple Watch, interactive demo">
+        <div class="crown" aria-hidden="true"></div>
+        <div class="button" aria-hidden="true"></div>
+        <div class="case">
+          <div class="screen">
+            <p class="rules">padel · golden point · best of 3</p>
+            <div class="tiles">
+              <div class="tile us" id="wA" role="button" tabindex="0" aria-label="Point for us">
+                <span class="tag">winner</span>
+                <span class="ball right" id="wBallA"></span>
+                <span id="wPtsA">0</span>
+              </div>
+              <div class="tile them" id="wB" role="button" tabindex="0" aria-label="Point for them">
+                <span class="tag">winner</span>
+                <span class="ball right" id="wBallB"></span>
+                <span id="wPtsB">0</span>
+              </div>
+            </div>
+            <div class="mini" id="wMini" aria-label="Games by set"></div>
+            <button class="undo" id="wUndo" type="button" aria-label="Undo the last point">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Try it: tap a side to score a point, the arrow takes it back.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 02 How it works: chalk ground, three steps. -->
+<section class="band" id="how">
+  <div class="wrap wide">
+    <p class="eyebrow">How it works</p>
+    <h2>Tap. Rally does the rest.</h2>
+    <div class="grid3">
+      <div class="card">
+        <span class="step">01</span>
+        <h3>Tap to score</h3>
+        <p>Your side is blue, theirs is clay. One tap on the wrist records a point and a haptic confirms it. A wrong tap is one tap from undone.</p>
+      </div>
+      <div class="card">
+        <span class="step">02</span>
+        <h3>The rules are handled</h3>
+        <p>Games, sets, tiebreaks, serve rotation and side switches follow the rules you picked for the sport: golden point or advantage, best of three or five, rally or side-out scoring.</p>
+      </div>
+      <div class="card">
+        <span class="step">03</span>
+        <h3>Your phone is the scoreboard</h3>
+        <p>Prop your iPhone or iPad courtside and it mirrors the score as you play. No watch at hand? Score on the phone instead, with the same rules.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 Sports: court night, the eight sports. -->
+<section class="band dark" id="sports">
+  <div class="wrap wide split">
+    <div>
+      <p class="eyebrow">Sports</p>
+      <h2>Every net, one app.</h2>
+      <p class="copy">Pick a default sport once and set its rules. Add the others whenever you play them; each keeps its own preset, and every new match starts from your defaults. Custom covers any first-to-a-number sport, win by two or not.</p>
+    </div>
+    <div class="chips" aria-label="Sports Rally scores">
+      <span class="chip on">Padel</span>
+      <span class="chip">Tennis</span>
+      <span class="chip">Pickleball</span>
+      <span class="chip">Table tennis</span>
+      <span class="chip">Badminton</span>
+      <span class="chip">Squash</span>
+      <span class="chip">Volleyball</span>
+      <span class="chip">Custom</span>
+    </div>
+  </div>
+</section>
+
+<!-- 04 Live sharing: chalk ground, the phone mirrors the watch above. -->
+<section class="band" id="share">
+  <div class="wrap wide split flip">
+    <div class="demo">
+      <!-- The courtside Board in portrait (STYLE_GUIDE): us on top in court
+           blue, them below in clay, the serve ball viewer-perspective (ours
+           at the near edge of our tile, theirs at the far edge, sides
+           mirrored), the sets mini-table, the connection dot. It renders the
+           same state as the watch in the hero. -->
+      <div class="phone" aria-label="Rally on iPhone, courtside scoreboard">
+        <div class="screen">
+          <div class="notch" aria-hidden="true"></div>
+          <p class="sport">padel · golden point · best of 3</p>
+          <div class="ptile us" id="pA" role="button" tabindex="0" aria-label="Point for us">
+            <span class="ball bottom right" id="pBallA"></span>
+            <span class="lbl">Us</span>
+            <span class="pts" id="pPtsA">0</span>
+          </div>
+          <div class="ptile them" id="pB" role="button" tabindex="0" aria-label="Point for them">
+            <span class="ball top left" id="pBallB"></span>
+            <span class="lbl">Them</span>
+            <span class="pts" id="pPtsB">0</span>
+          </div>
+          <div class="mini" id="pMini" aria-label="Games by set"></div>
+          <div class="status" id="pStatus"><span class="dot"></span><span id="pStatusText">live</span></div>
+        </div>
+      </div>
+      <p class="hint">This phone mirrors the watch above. Score there, watch it move here.</p>
+    </div>
+    <div>
+      <p class="eyebrow">Live sharing</p>
+      <h2>Share the score with a 6-digit code.</h2>
+      <p class="copy">Followers need no account and nothing to install: the link opens a live scoreboard in any browser, or they enter the code in the Rally app. Following is always free; hosting a share is part of Rally Pro.</p>
+      <p class="copy">Sharing is ephemeral by design. While the match runs, our server holds only the code and the current score, and both are deleted the moment the match ends.</p>
+      <div class="cta">
+        <a class="pill" href="board/"><span class="dot"></span>Open the live board</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 Trust: court night, the workout and the local-first promise. -->
+<section class="band dark" id="trust">
+  <div class="wrap wide">
+    <p class="eyebrow">Built to be trusted</p>
+    <h2>Never loses a point.</h2>
+    <p class="copy">The watch is the source of truth. A dropped connection never costs a point; the phone and every follower simply catch up when it returns.</p>
+    <div class="grid2" style="margin-top:2rem;">
+      <div class="card">
+        <h3>Counts as a workout</h3>
+        <p>With your permission, Rally records each match as a workout with heart rate and calories from the watch, so it counts toward your Activity rings. It never takes over a workout you already started in another app.</p>
+      </div>
+      <div class="card">
+        <h3>Local first</h3>
+        <p>Your history lives on your devices, not on our servers. Export it any time, free, in an open format. Heart rate and calories never leave the watch and phone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="dark">
+  <div class="wrap">
+    <div class="brandrow">
+      <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg>
+      <span class="n">rally</span>
+    </div>
+    <nav aria-label="Legal">
+      <a href="privacy/">Privacy policy</a>
+      <a href="terms/">Terms of use</a>
+      <a href="support/">Support</a>
+      <a href="impressum/">Legal notice</a>
+    </nav>
+    <p class="fine">Questions? <a href="mailto:denis.fenger@softailed.com">denis.fenger@softailed.com</a></p>
+    <p class="fine">&copy; 2026 Fenger Digital GmbH</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  // A small, honest padel scorer for the two mockups: golden point, best of
+  // three sets, tiebreak to 7 at 6-6, serve alternating per game (and after
+  // the first point, then every two, in a tiebreak). Same state feeds the
+  // watch and the phone, which is literally how the product works.
+  var LABELS = ['0', '15', '30', '40'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  function fresh() {
+    return {
+      pts: [0, 0], games: [0, 0], sets: [],
+      tb: false, tbPts: [0, 0], tbFirst: 0,
+      server: 0, winner: null
+    };
+  }
+  var s = fresh();
+  var history = [];
+
+  function setsWon(st) {
+    var w = [0, 0];
+    for (var i = 0; i < st.sets.length; i++) w[st.sets[i][0] > st.sets[i][1] ? 0 : 1]++;
+    return w;
+  }
+
+  function finishSet() {
+    s.sets.push([s.games[0], s.games[1]]);
+    if (s.tb) s.server = 1 - s.tbFirst;
+    s.games = [0, 0]; s.pts = [0, 0]; s.tb = false; s.tbPts = [0, 0];
+    var w = setsWon(s);
+    if (w[0] === 2) s.winner = 0;
+    else if (w[1] === 2) s.winner = 1;
+  }
+
+  function point(side) {
+    if (s.winner !== null) { s = fresh(); history = []; render(); return; }
+    history.push(JSON.stringify(s));
+    if (history.length > 300) history.shift();
+    var o = 1 - side;
+    if (s.tb) {
+      s.tbPts[side]++;
+      if ((s.tbPts[0] + s.tbPts[1]) % 2 === 1) s.server = 1 - s.server;
+      if (s.tbPts[side] >= 7 && s.tbPts[side] - s.tbPts[o] >= 2) {
+        s.games[side]++;
+        finishSet();
+      }
+    } else if (s.pts[side] === 3) {
+      s.games[side]++; s.pts = [0, 0]; s.server = 1 - s.server;
+      var g = s.games[side], h = s.games[o];
+      if (g >= 6 && g - h >= 2) finishSet();
+      else if (g === 6 && h === 6) { s.tb = true; s.tbPts = [0, 0]; s.tbFirst = s.server; }
+    } else {
+      s.pts[side]++;
+    }
+    render();
+  }
+
+  function undo() {
+    if (!history.length) return;
+    s = JSON.parse(history.pop());
+    render();
+  }
+
+  function courtSide() {
+    var total = s.tb ? s.tbPts[0] + s.tbPts[1] : s.pts[0] + s.pts[1];
+    return total % 2 === 0 ? 'right' : 'left';
+  }
+
+  function labels() {
+    if (s.winner !== null) { var w = setsWon(s); return [String(w[0]), String(w[1])]; }
+    if (s.tb) return [String(s.tbPts[0]), String(s.tbPts[1])];
+    return [LABELS[s.pts[0]], LABELS[s.pts[1]]];
+  }
+
+  function miniHtml() {
+    var cols = [];
+    for (var i = 0; i < s.sets.length; i++) {
+      var p = s.sets[i], aWin = p[0] > p[1];
+      cols.push('<div class="col"><span class="' + (aWin ? 'a' : 'dim') + '">' + p[0] +
+        '</span><span class="' + (aWin ? 'dim' : 'b') + '">' + p[1] + '</span></div>');
+    }
+    if (s.winner === null) {
+      cols.push('<div class="col"><span class="live">' + s.games[0] +
+        '</span><span class="live">' + s.games[1] + '</span></div>');
+    }
+    return cols.join('');
+  }
+
+  function render() {
+    var l = labels(), side = courtSide(), live = s.winner === null;
+    $('wPtsA').textContent = l[0]; $('wPtsB').textContent = l[1];
+    $('pPtsA').textContent = l[0]; $('pPtsB').textContent = l[1];
+    var tiles = [[$('wA'), $('pA')], [$('wB'), $('pB')]];
+    for (var i = 0; i < 2; i++) {
+      for (var j = 0; j < 2; j++) {
+        tiles[i][j].classList.toggle('serving', live && s.server === i);
+        tiles[i][j].classList.toggle('won', s.winner === i);
+      }
+    }
+    // Watch: the ball sits on the serve court side of the serving tile.
+    $('wBallA').className = 'ball ' + side;
+    $('wBallB').className = 'ball ' + side;
+    // Phone: viewer perspective, ours at the near edge, theirs far and mirrored.
+    $('pBallA').className = 'ball bottom ' + side;
+    $('pBallB').className = 'ball top ' + (side === 'right' ? 'left' : 'right');
+    var mini = miniHtml();
+    $('wMini').innerHTML = mini;
+    $('pMini').innerHTML = mini;
+    $('pStatus').classList.toggle('off', !live);
+    $('pStatusText').textContent = live ? 'live' : 'ended';
+  }
+
+  function bind(id, side) {
+    var el = $(id);
+    el.addEventListener('click', function () { point(side); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); point(side); }
+    });
+  }
+  bind('wA', 0); bind('wB', 1); bind('pA', 0); bind('pB', 1);
+  $('wUndo').addEventListener('click', undo);
+  render();
+})();
+</script>
+
+</body>
+</html>
