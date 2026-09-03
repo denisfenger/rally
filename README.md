@@ -11,8 +11,11 @@ in `/`.
 README.md            this file
 icon.svg             the court-sides mark on the court-night ground (favicon)
 style.css            shared tokens and components (STYLE_GUIDE.md palette)
-index.html           landing: hero with a working watch scorer, how it works,
-                     sports, live sharing (phone mirrors the watch), trust
+index.html           landing: hero with a working watch scorer (engine-faithful
+                     padel: golden point or advantage, tiebreak, serve rotation,
+                     viewer-perspective serve ball), how it works, sports,
+                     live sharing (the phone Board runs the same match), trust,
+                     free and Pro (features only, no prices)
 privacy/index.html   privacy policy, EN with the DE version beneath
 terms/index.html     terms of use, EN with the DE version beneath
 support/index.html   contact, what the app is, common questions
@@ -92,10 +95,25 @@ and the edge function can be removed at the next backend pass.
 
 ## Verifying before a push
 
-Render every page with Edge headless
-(`msedge --headless --screenshot --window-size=W,H <file>`), at
-390x844 and 1280x800, and eyeball the PNGs. Known trap (kit
-`lessons.md`): headless Edge lays out no narrower than ~476 CSS px, so
-the 390 capture shows a 476-wide layout cropped to 390; judge narrow
-behaviour with a DOM overflow probe (`scrollWidth` vs `clientWidth`),
-not by the crop.
+`node scripts/verify-site.mjs` drives the landing in headless Edge
+over the DevTools protocol (no dependencies) and exits 1 on any
+failure: it plays a scripted three-set padel match (golden point and
+advantage) against an independent reference model and asserts the
+serve ball's tile, edge and court side after every point on both
+mockups (the rule: our serve at the near/bottom edge below the number
+on the serve court side, right when the game's point total is even and
+left when odd; their serve at the far/top edge above the number with
+the sides mirrored); checks that no sport card is selected on load;
+lists every element with a click handler or interactive role and
+requires a computed `cursor: pointer` plus a visible hover and pressed
+state under real mouse events; renders 390, 768 and 1280 full-page
+PNGs with overflow probes; asserts no external request, no console
+error and no running animation under `prefers-reduced-motion:
+reduce`. PNGs land in `%TEMP%/rally-site-verify/` (set
+`RALLY_SITE_OUT` to change); eyeball them, sliced if tall.
+
+Why the protocol and not `msedge --screenshot`: headless Edge lays out
+no narrower than ~476 CSS px from the command line (kit `lessons.md`),
+so a 390 capture would show a cropped 476-wide layout; the protocol's
+device-metrics emulation renders the true width and can compute
+styles, which `--dump-dom` cannot.
