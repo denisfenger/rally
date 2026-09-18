@@ -79,11 +79,40 @@ Later content pushes work with the headless git recipe.
 `board/index.html` is self-contained. It joins through `share-join`
 (POST `{code}`), then polls `share-state` (POST `{shareId}`) every
 2.5 s with one request in flight, backs off to 10 s after three
-consecutive failures, stops on `ended: true` or a 404 (the row is
-deleted at match end) and shows the ended banner, pauses while the tab
-is hidden and resumes on `visibilitychange`. The dot turns amber after
-20 s without a successful poll. No `?code=` shows the entry form, which
-submits to `board/?code=` so the URL shape the app shares stays stable.
+consecutive failures, pauses while the tab is hidden and resumes on
+`visibilitychange`. The dot turns amber after 20 s without a
+successful poll. No `?code=` shows the entry form, which submits to
+`board/?code=` so the URL shape the app shares stays stable.
+
+A SHARE IS A SESSION (feedback round 7, decision 12), and since the
+round-8 relay deploy the live endpoints carry it, so the page does
+too:
+
+- it tracks the relay's `matchId`. A new id is the next match of the
+  same session: the seq guard restarts (the new match numbers its
+  snapshots from 1 again) and the finished match moves into the
+  session strip under the score, oldest first, with its own sport,
+  the outer units won in the team colors and the set pairs;
+- a match that ENDS is not the end of the follow. The last score
+  stays with "Waiting for the next match" and the polling continues,
+  so the next match appears on its own;
+- the ONLY terminal state is a 404 from `share-join` or `share-state`
+  (the host stopped sharing, or the session idled past the relay's
+  TTL). The banner then reads "match ended" when the last match was
+  decided and "sharing ended", with one explaining line, when the
+  share stopped mid-match;
+- participants' NAMES travel with a share (decision 10). When
+  `participants` is present the tiles read them, joined with " & " and
+  shortened to the shortest unambiguous form within the match
+  (decision 11: first name, then first name plus surname initial, then
+  the full name). Without them the tiles read Team A and Team B. Ids
+  never reach this page, and a name change mid-session relabels the
+  tiles on the next poll, without a point.
+
+Before this the page froze on the first finished match of a session
+(the `seq <= curSeq` guard dropped the next match's seq 1, and the
+ended flag cleared the poll timer for good), which a live smoke test
+caught on 2026-09-18.
 
 Why polling and not Realtime: the earlier board pulled `supabase-js`
 from a CDN for the broadcast channel, which the no-external-requests
@@ -117,3 +146,15 @@ no narrower than ~476 CSS px from the command line (kit `lessons.md`),
 so a 390 capture would show a cropped 476-wide layout; the protocol's
 device-metrics emulation renders the true width and can compute
 styles, which `--dump-dom` cannot.
+
+The harness covers the LANDING. The board is verified against the
+REAL relay instead, because its whole contract is the relay's: a
+throwaway session is created through `share-create`, driven with
+`share-uplink` (points, an ended snapshot, a second `matchId` that
+rolls the session over, a name change on a stale seq) and closed with
+`share-end`, while the page runs in the same headless Edge on a local
+static server and every state is read back out of the DOM. Last run
+2026-09-18: 75 checks, all green, zero rows left in `shared_matches`.
+Re-run it after any change to `board/index.html` or to the share edge
+functions; a session costs two `share-create` calls against the
+10-per-10-minutes limit.

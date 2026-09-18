@@ -5,12 +5,24 @@
      share through the share-join edge function (POST {code}) and then polls
      share-state (POST {shareId}) over plain fetch: every 2.5 s, one request
      in flight at a time, backing off to 10 s after three consecutive
-     failures, stopping on ended:true or 404 (the row is deleted at match
-     end), pausing while the tab is hidden and resuming on visibilitychange.
+     failures, pausing while the tab is hidden and resuming on
+     visibilitychange.
      Request and response shapes: supabase/functions/share-join/index.ts and
      supabase/functions/share-state/index.ts. share-state carries no per-IP
      rate limit by design (a club's Wi-Fi is one address); share-join keeps
      its 30 per 10 minutes against code guessing.
+     A SHARE IS A SESSION, not a match (feedback round 7, decision 12): the
+     host keeps the same code across consecutive matches. So the page tracks
+     the relay's matchId; when it changes the seq guard restarts (the next
+     match numbers its snapshots from 1 again) and the finished match moves
+     into the session strip. A match that ends is NOT the end of the follow:
+     it shows the last score with "waiting for the next match" and keeps
+     polling. The ONLY terminal state is a 404 from share-join or
+     share-state, which means the row is gone (the host stopped sharing or
+     the session idled out).
+     Participants' NAMES travel with a share (decision 10): the tiles read
+     "Denis & Eric" instead of Team A, shortened to the shortest unambiguous
+     form within the match (decision 11). Ids never reach this page.
      The anon key is public by design: it grants nothing, the table is
      service-role-only and every mutation goes through edge functions.
      The rendering is the scoreboard the app's Board and follow screen use:
@@ -52,27 +64,34 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     padding: 14px 20px;
     border-bottom: 1px solid var(--line);
   }
   #sport { font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: lowercase; }
+    text-transform: lowercase; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
   #status { display: flex; align-items: center; gap: 8px; font-size: 13px;
-    color: var(--muted); }
-  #dot { width: 10px; height: 10px; border-radius: 50%;
+    color: var(--muted); flex: none; }
+  #dot { width: 10px; height: 10px; border-radius: 50%; flex: none;
     background: var(--live); }
   #dot.stale { background: var(--stale); }
   #dot.off { background: var(--muted); }
   main { flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center; padding: 24px 16px;
     gap: 28px; }
-  #banner { display: none; font-size: 15px; color: var(--muted);
+  #banner { display: none; flex-direction: column; align-items: center;
+    gap: 8px; }
+  #banner.show { display: flex; }
+  #bannerTitle { font-size: 15px; color: var(--muted);
     letter-spacing: 0.06em; text-transform: uppercase; }
-  #banner.show { display: block; }
+  #bannerHint { font-size: 14px; color: var(--muted); text-align: center;
+    max-width: 30em; }
+  #bannerHint:empty { display: none; }
   #score { display: flex; align-items: center; justify-content: center;
     flex-wrap: wrap; gap: 20px 6vw; max-width: 100%; }
   .side { display: flex; flex-direction: column; align-items: center;
-    gap: 10px; min-width: 128px; }
+    gap: 10px; min-width: 128px; max-width: 46vw; }
   /* Phones: the sets table drops under the two sides instead of pushing
      them past the edge (five sets beside 64 px points do not fit in
      360 px). The ::after item is the line break; the table takes the
@@ -82,6 +101,13 @@
     #score::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
     #setsTable { order: 3; }
   }
+  /* The side label above the points: the participants' names when the
+     share carries them (decision 10), else Team A / Team B. Same idiom
+     as the app's tiles (13 pt, uppercase, ink-soft). */
+  .side-name { font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: center; }
   .points { font-size: clamp(64px, 18vw, 148px); font-weight: 700;
     line-height: 1; font-variant-numeric: tabular-nums; }
   .side.a .points { color: var(--us); }
@@ -102,6 +128,39 @@
   #setsTable tr.a td { color: var(--us); }
   #setsTable tr.b td { color: var(--them); }
   #setsTable td sup { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  /* Between the matches of a session: the last score stays above, this
+     says why nothing moves. */
+  #waiting { display: none; flex-direction: column; align-items: center;
+    gap: 6px; padding: 16px 20px; border: 1px solid var(--line);
+    border-radius: 12px; background: var(--panel); max-width: 100%; }
+  #waiting.show { display: flex; }
+  #waitingTitle { font-size: 16px; font-weight: 600; text-align: center; }
+  #waitingHint { font-size: 14px; color: var(--muted); text-align: center;
+    max-width: 36em; }
+  /* The session strip (decision 12): the matches finished earlier under
+     this code, oldest first. */
+  #session { display: none; flex-direction: column; gap: 10px;
+    padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--panel); width: 100%; max-width: 420px; }
+  #session.show { display: flex; }
+  #sessionLabel { font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); }
+  #sessionList { list-style: none; margin: 0; padding: 0; display: flex;
+    flex-direction: column; gap: 8px; }
+  .s-row { display: flex; align-items: baseline; flex-wrap: wrap;
+    gap: 4px 12px; font-size: 14px; }
+  .s-sport { flex: 1 1 auto; min-width: 0; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .s-units { font-size: 16px; font-weight: 600; flex: none;
+    font-variant-numeric: tabular-nums; }
+  .s-units .a { color: var(--us); }
+  .s-units .b { color: var(--them); }
+  .s-units .sep { color: var(--muted); }
+  .s-pairs { color: var(--muted); flex: none; display: inline-flex;
+    gap: 10px; font-variant-numeric: tabular-nums; }
+  #sessionLive { display: none; font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text); }
+  #sessionLive.show { display: block; }
   #codeLabel { font-size: 13px; color: var(--muted);
     letter-spacing: 0.14em; }
   #joinForm { display: none; flex-direction: column; align-items: center;
@@ -119,7 +178,7 @@
   #joinError { color: var(--them); font-size: 14px; min-height: 18px;
     margin: 0; }
   #board { display: none; flex-direction: column; align-items: center;
-    gap: 28px; }
+    gap: 28px; width: 100%; }
   #board.show { display: flex; }
 </style>
 </head>
@@ -137,9 +196,13 @@
     <button type="submit">Watch</button>
   </form>
   <section id="board">
-    <div id="banner">match ended</div>
+    <div id="banner">
+      <div id="bannerTitle">sharing ended</div>
+      <div id="bannerHint"></div>
+    </div>
     <div id="score">
       <div class="side a" id="sideA">
+        <div class="side-name" id="nameA">Team A</div>
         <span class="winner-tag">winner</span>
         <div class="points" id="pointsA">0</div>
         <span class="serve"></span>
@@ -150,12 +213,23 @@
         <tr class="b" id="rowB"></tr>
       </table>
       <div class="side b" id="sideB">
+        <div class="side-name" id="nameB">Team B</div>
         <span class="winner-tag">winner</span>
         <div class="points" id="pointsB">0</div>
         <span class="serve"></span>
         <div class="sets-won">sets <b id="setsB">0</b></div>
       </div>
     </div>
+    <div id="waiting">
+      <div id="waitingTitle">Waiting for the next match</div>
+      <div id="waitingHint">The host keeps sharing. The next match appears
+        here on its own.</div>
+    </div>
+    <section id="session" aria-label="earlier in this session">
+      <div id="sessionLabel">Earlier in this session</div>
+      <ol id="sessionList"></ol>
+      <div id="sessionLive">Live now</div>
+    </section>
     <div id="codeLabel"></div>
   </section>
 </main>
@@ -170,12 +244,29 @@
   var POLL_SLOW_MS = 10000;      // after SLOW_AFTER consecutive failures
   var SLOW_AFTER = 3;
   var STALE_MS = 20000;          // amber dot without a successful poll
+  var RESULTS_CAP = 20;          // the relay's own cap on a session's results
+
+  // The sport ids the relay carries (src/sportCatalog.ts), lowercased for
+  // the header the same way the app's chips read.
+  var SPORTS = {
+    padel: "padel", tennis: "tennis", pickleball: "pickleball",
+    tabletennis: "table tennis", badminton: "badminton", squash: "squash",
+    volleyball: "volleyball", beachvolleyball: "beach volleyball",
+    racquetball: "racquetball", custom: "custom"
+  };
 
   var el = function (id) { return document.getElementById(id); };
   var shareId = null;
   var curSeq = -1;
+  var curMatchId = null;         // the session's current match, per the relay
+  var curSport = "";
+  var lastSnapshot = null;
+  var names = null;              // {teamA: [names], teamB: [names]} or null
+  var relayResults = [];         // finished matches, as the relay lists them
+  var localResults = [];         // rollovers seen here before the relay listed
+  var matchOver = false;         // the CURRENT match ended; session lives on
+  var sessionOver = false;       // terminal: the row is gone (404)
   var lastOk = 0;                // time of the last successful join or poll
-  var ended = false;
   var joined = false;
   var inFlight = false;
   var failures = 0;
@@ -199,6 +290,218 @@
     // Keeps the folder URL (board/?code=), the shape the app shares.
     location.search = "?code=" + v;
   });
+
+  function sportLabel(id) {
+    if (typeof id !== "string" || id.length === 0) return "rally";
+    return SPORTS[id] || id;
+  }
+
+  // --- Participants (decision 10) -------------------------------------
+
+  function nameList(value) {
+    if (!Array.isArray(value)) return [];
+    var out = [];
+    for (var i = 0; i < value.length && out.length < 2; i++) {
+      if (typeof value[i] !== "string") continue;
+      var cleaned = value[i].replace(/\s+/g, " ").trim().slice(0, 40);
+      if (cleaned.length > 0) out.push(cleaned);
+    }
+    return out;
+  }
+
+  function readParticipants(raw) {
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      return null;
+    }
+    var teamA = nameList(raw.teamA);
+    var teamB = nameList(raw.teamB);
+    if (teamA.length === 0 && teamB.length === 0) return null;
+    return { teamA: teamA, teamB: teamB };
+  }
+
+  // Shortest unambiguous display name within the match (decision 11):
+  // first name; first name plus surname initial when two first names
+  // collide; the full name when the initial collides too.
+  function displayNames(list) {
+    var first = list.map(function (n) { return n.split(" ")[0]; });
+    var initial = list.map(function (n) {
+      var parts = n.split(" ");
+      return parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+    });
+    return list.map(function (full, i) {
+      var clash = first.some(function (f, j) {
+        return j !== i && f.toLowerCase() === first[i].toLowerCase();
+      });
+      if (!clash) return first[i];
+      if (initial[i].length === 0) return full;
+      var clashInitial = first.some(function (f, j) {
+        return j !== i && f.toLowerCase() === first[i].toLowerCase() &&
+          initial[j].toUpperCase() === initial[i].toUpperCase();
+      });
+      return clashInitial ? full : first[i] + " " + initial[i] + ".";
+    });
+  }
+
+  function renderNames() {
+    var labelA = "Team A";
+    var labelB = "Team B";
+    if (names) {
+      var all = names.teamA.concat(names.teamB);
+      var shown = displayNames(all);
+      var a = shown.slice(0, names.teamA.length);
+      var b = shown.slice(names.teamA.length);
+      if (a.length > 0) labelA = a.join(" & ");
+      if (b.length > 0) labelB = b.join(" & ");
+    }
+    el("nameA").textContent = labelA;
+    el("nameB").textContent = labelB;
+  }
+
+  // --- Session results (decision 12) -----------------------------------
+
+  function readPair(value) {
+    if (!Array.isArray(value) || value.length < 2) return null;
+    if (typeof value[0] !== "number" || typeof value[1] !== "number") {
+      return null;
+    }
+    return [value[0], value[1]];
+  }
+
+  function readResults(raw) {
+    if (!Array.isArray(raw)) return [];
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      var entry = raw[i];
+      if (typeof entry !== "object" || entry === null) continue;
+      if (typeof entry.matchId !== "string" || entry.matchId.length === 0) {
+        continue;
+      }
+      var pairs = [];
+      if (Array.isArray(entry.setPairs)) {
+        for (var p = 0; p < entry.setPairs.length; p++) {
+          var pair = readPair(entry.setPairs[p]);
+          if (pair) pairs.push(pair);
+        }
+      }
+      out.push({
+        matchId: entry.matchId,
+        sport: typeof entry.sport === "string" ? entry.sport : "",
+        setPairs: pairs,
+        winner: entry.winner === "A" || entry.winner === "B"
+          ? entry.winner
+          : null
+      });
+    }
+    return out.slice(-RESULTS_CAP);
+  }
+
+  // What the relay stores when a match leaves the current slot; kept here
+  // only until the next poll lists it, so the strip never blinks empty.
+  function rememberFinished() {
+    if (!curMatchId || !lastSnapshot) return;
+    var pairs = [];
+    if (Array.isArray(lastSnapshot.gamesBySet)) {
+      for (var i = 0; i < lastSnapshot.gamesBySet.length; i++) {
+        var pair = readPair(lastSnapshot.gamesBySet[i]);
+        if (pair) pairs.push(pair);
+      }
+    }
+    var winner = lastSnapshot.winner === "A" || lastSnapshot.winner === "B"
+      ? lastSnapshot.winner
+      : null;
+    // A match discarded before its first point is not a result (the relay
+    // drops it too).
+    var scored = winner !== null || pairs.some(function (p) {
+      return p[0] > 0 || p[1] > 0;
+    });
+    if (!scored) return;
+    var id = curMatchId;
+    localResults = localResults.filter(function (r) {
+      return r.matchId !== id;
+    });
+    localResults.push({
+      matchId: id, sport: curSport, setPairs: pairs, winner: winner
+    });
+    localResults = localResults.slice(-RESULTS_CAP);
+  }
+
+  function sessionResults() {
+    var out = relayResults.slice();
+    var seen = {};
+    out.forEach(function (r) { seen[r.matchId] = true; });
+    localResults.forEach(function (r) {
+      if (!seen[r.matchId] && r.matchId !== curMatchId) out.push(r);
+    });
+    return out.slice(-RESULTS_CAP);
+  }
+
+  // Outer units won, ignoring a last unit still in progress (the app's
+  // partitionPairs rule: a match ended by hand keeps its open set).
+  function unitsWon(result) {
+    var pairs = result.setPairs.slice();
+    var inProgress = -1;
+    if (result.winner === null && pairs.length > 0) {
+      var last = pairs[pairs.length - 1];
+      if (last[0] === 0 && last[1] === 0 && pairs.length > 1) pairs.pop();
+      else inProgress = pairs.length - 1;
+    }
+    var won = [0, 0];
+    pairs.forEach(function (pair, i) {
+      if (i === inProgress) return;
+      if (pair[0] > pair[1]) won[0] += 1;
+      else if (pair[1] > pair[0]) won[1] += 1;
+    });
+    return { won: won, pairs: pairs };
+  }
+
+  function resultRow(result) {
+    var counted = unitsWon(result);
+    var li = document.createElement("li");
+    li.className = "s-row";
+    var sport = document.createElement("span");
+    sport.className = "s-sport";
+    sport.textContent = sportLabel(result.sport);
+    li.appendChild(sport);
+    var units = document.createElement("span");
+    units.className = "s-units";
+    var a = document.createElement("span");
+    a.className = "a";
+    a.textContent = String(counted.won[0]);
+    var sep = document.createElement("span");
+    sep.className = "sep";
+    sep.textContent = ":";
+    var b = document.createElement("span");
+    b.className = "b";
+    b.textContent = String(counted.won[1]);
+    units.appendChild(a);
+    units.appendChild(sep);
+    units.appendChild(b);
+    li.appendChild(units);
+    var pairs = document.createElement("span");
+    pairs.className = "s-pairs";
+    counted.pairs.forEach(function (pair) {
+      var span = document.createElement("span");
+      span.textContent = pair[0] + ":" + pair[1];
+      pairs.appendChild(span);
+    });
+    li.appendChild(pairs);
+    return li;
+  }
+
+  function renderSession() {
+    var list = sessionResults();
+    var box = el("session");
+    var out = el("sessionList");
+    out.textContent = "";
+    list.forEach(function (result) { out.appendChild(resultRow(result)); });
+    box.classList.toggle("show", list.length > 0);
+    el("sessionLive").classList.toggle(
+      "show", list.length > 0 && !sessionOver && !matchOver
+    );
+    el("waiting").classList.toggle("show", matchOver && !sessionOver);
+  }
+
+  // --- The live match ---------------------------------------------------
 
   function renderSnapshot(snap) {
     var labels = snap.pointLabels || ["0", "0"];
@@ -231,35 +534,80 @@
       rowB.appendChild(tdB);
     }
 
-    el("sideA").classList.toggle("serving", !ended && snap.server === "A");
-    el("sideB").classList.toggle("serving", !ended && snap.server === "B");
+    var live = !matchOver && !sessionOver;
+    el("sideA").classList.toggle("serving", live && snap.server === "A");
+    el("sideB").classList.toggle("serving", live && snap.server === "B");
     el("sideA").classList.toggle("won", snap.winner === "A");
     el("sideB").classList.toggle("won", snap.winner === "B");
-    if (snap.ended) markEnded();
   }
 
+  // Within a match the seq only moves forward. A rollover resets the
+  // guard before this runs (the next match numbers from 1 again).
   function applySnapshot(seq, snap) {
     if (typeof seq !== "number" || seq <= curSeq || !snap) return;
     curSeq = seq;
+    lastSnapshot = snap;
+    matchOver = snap.ended === true;
     renderSnapshot(snap);
   }
 
-  function markEnded() {
-    if (ended) return;
-    ended = true;
-    clearTimeout(timer);
-    el("banner").classList.add("show");
-    el("statusText").textContent = "ended";
-    el("dot").className = "off";
-    el("sideA").classList.remove("serving");
-    el("sideB").classList.remove("serving");
+  // One relay answer (share-join or share-state), session-aware.
+  function applySession(data) {
+    var incoming = typeof data.matchId === "string" && data.matchId.length > 0
+      ? data.matchId
+      : null;
+    if (incoming && curMatchId && incoming !== curMatchId) {
+      // The session rolled over to the next match: the finished one goes
+      // into the strip, the seq guard and the ended state restart.
+      rememberFinished();
+      curMatchId = incoming;
+      curSeq = -1;
+      matchOver = false;
+      lastSnapshot = null;
+    } else if (incoming && !curMatchId) {
+      curMatchId = incoming;
+    }
+    if (typeof data.sport === "string" && data.sport.length > 0) {
+      curSport = data.sport;
+      el("sport").textContent = sportLabel(curSport);
+    }
+    names = readParticipants(data.participants);
+    renderNames();
+    relayResults = readResults(data.results);
+    applySnapshot(data.seq, data.snapshot);
+    renderSession();
+    setStatus();
   }
 
-  function tickStaleness() {
-    if (ended || !joined) return;
+  // The session is gone (404 on join or poll): the only terminal state.
+  // A match that merely ended keeps the page polling for the next one.
+  function markSessionEnded() {
+    if (sessionOver) return;
+    sessionOver = true;
+    clearTimeout(timer);
+    el("bannerTitle").textContent = matchOver ? "match ended" : "sharing ended";
+    el("bannerHint").textContent = matchOver
+      ? ""
+      : "The host stopped sharing. The score above is the last one received.";
+    el("banner").classList.add("show");
+    el("sideA").classList.remove("serving");
+    el("sideB").classList.remove("serving");
+    renderSession();
+    setStatus();
+  }
+
+  function setStatus() {
+    if (!joined) return;
+    if (sessionOver) {
+      el("statusText").textContent = "ended";
+      el("dot").className = "off";
+      return;
+    }
     var stale = Date.now() - lastOk > STALE_MS;
     el("dot").className = stale ? "stale" : "";
-    el("statusText").textContent = stale ? "stale" : "live";
+    el("statusText").textContent = stale
+      ? "stale"
+      : matchOver ? "waiting for the next match" : "live";
   }
 
   // One JSON POST to an edge function. Resolves {status, data}; data is
@@ -285,18 +633,18 @@
 
   function schedule(ms) {
     clearTimeout(timer);
-    if (ended || !joined || document.hidden) return;
+    if (sessionOver || !joined || document.hidden) return;
     timer = setTimeout(poll, ms);
   }
 
   function poll() {
-    if (ended || !joined || inFlight || document.hidden) return;
+    if (sessionOver || !joined || inFlight || document.hidden) return;
     inFlight = true;
     post("/share-state", { shareId: shareId }).then(function (res) {
       inFlight = false;
       if (res.status === 404) {
-        // Row gone: the host ended the share or it expired.
-        markEnded();
+        // Row gone: the host ended the SESSION or it expired.
+        markSessionEnded();
         return;
       }
       if (!res.data) {
@@ -306,8 +654,7 @@
       }
       failures = 0;
       lastOk = Date.now();
-      applySnapshot(res.data.seq, res.data.snapshot);
-      if (res.data.ended) markEnded();
+      applySession(res.data);
       schedule(POLL_MS);
     }, function () {
       inFlight = false;
@@ -335,12 +682,11 @@
       lastOk = Date.now();
       el("joinForm").classList.remove("show");
       el("board").classList.add("show");
-      el("sport").textContent = String(res.data.sport || "rally");
       el("codeLabel").textContent = "code " + code;
       el("dot").className = "";
       el("statusText").textContent = "live";
-      applySnapshot(res.data.seq, res.data.snapshot);
-      setInterval(tickStaleness, 1000);
+      applySession(res.data);
+      setInterval(setStatus, 1000);
       schedule(POLL_MS);
     }, function () {
       showForm("Could not reach the score service. Try again");
@@ -352,7 +698,7 @@
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
       clearTimeout(timer);
-    } else if (joined && !ended) {
+    } else if (joined && !sessionOver) {
       clearTimeout(timer);
       poll();
     }
