@@ -36,7 +36,7 @@
   <h2>The short version</h2>
   <ul>
     <li><strong>Your match history stays on your device.</strong> We cannot see it and we do not want to.</li>
-    <li><strong>Live sharing is ephemeral.</strong> While you share, our server holds only a join code, the current score, the players' names if you set them, and the results of earlier matches in the same session. That row is deleted when you stop sharing.</li>
+    <li><strong>Live sharing is ephemeral.</strong> While you share a match, our server holds only a join code, the current score and the players' names if you set them. That row is deleted when the match ends or you stop sharing.</li>
     <li><strong>Health data never leaves your device.</strong> Heart rate and calories stay on your watch and phone.</li>
     <li><strong>Purchases run through Apple and RevenueCat</strong> under a random identifier, without your name or email.</li>
     <li><strong>No ads, no tracking, no data sales.</strong> Rally contains no advertising or tracking SDKs.</li>
@@ -60,19 +60,17 @@
   deletes it in place when you choose "Reset and delete history".</p>
 
   <h2>Live sharing: one row, then gone</h2>
-  <p>When you actively share, our server (Supabase, hosted in the EU,
-  region Frankfurt) stores exactly one row for that sharing session: the
+  <p>When you actively share a match, our server (Supabase, hosted in
+  the EU, region Frankfurt) stores exactly one row for that match: the
   6-digit join code, the sport and the current score snapshot, meaning
-  points, games, sets and who serves; the names of the players if you
-  have set them, so followers see who is playing instead of Team A and
-  Team B; and the final scores of matches you already finished in the
-  same session, so followers can see how the session went. No account,
-  no match history and no event log are uploaded. A sharing session
-  spans the matches you play one after another under the same code: the
-  row survives the end of a single match, and is deleted when you stop
-  sharing, when nothing has been sent for two hours, and in any case no
-  later than 24 hours after it was created. Nothing of it is kept
-  afterwards.</p>
+  points, games, sets and who serves; and the names of the players if
+  you have set them, so followers see who is playing instead of Team A
+  and Team B. No account, no match history and no event log are
+  uploaded. A share covers one match: the row is deleted when the match
+  ends or when you stop sharing, when the score has not changed for two
+  hours, and in any case no later than 24 hours after it was created.
+  The next match you share gets a new code and a new row. Nothing of it
+  is kept afterwards.</p>
   <p>People who follow your match need no account. We do not record who
   watched. Legal basis: performance of the sharing feature you actively
   start (art. 6(1)(b) GDPR).</p>
@@ -118,8 +116,8 @@
   complain to a data protection supervisory authority.</p>
   <p>In practice, because Rally is local first, you hold the delete key
   yourself: Settings &gt; Reset app or deleting the app removes your
-  history, a sharing session deletes itself when you stop sharing or
-  when it expires, and the hashed rate-limit counters are gone on their own
+  history, a shared match deletes itself when the match ends, when you
+  stop sharing or when it expires, and the hashed rate-limit counters are gone on their own
   within about an hour. The free export is your
   data portability. For the one thing that lives elsewhere, the purchase
   record at RevenueCat, email us and we will have it deleted.</p>
@@ -143,7 +141,7 @@
   <h2>Das Wichtigste in Kürze</h2>
   <ul>
     <li><strong>Ihr Spielverlauf bleibt auf Ihrem Gerät.</strong> Wir können ihn nicht einsehen.</li>
-    <li><strong>Live-Teilen ist flüchtig.</strong> Während Sie teilen, speichert unser Server nur den Beitrittscode, den aktuellen Spielstand, die Namen der Spielerinnen und Spieler, wenn Sie welche hinterlegt haben, und die Ergebnisse früherer Spiele derselben Sitzung. Diese Zeile wird gelöscht, sobald Sie das Teilen beenden.</li>
+    <li><strong>Live-Teilen ist flüchtig.</strong> Während Sie ein Spiel teilen, speichert unser Server nur den Beitrittscode, den aktuellen Spielstand und die Namen der Spielerinnen und Spieler, wenn Sie welche hinterlegt haben. Diese Zeile wird gelöscht, sobald das Spiel endet oder Sie das Teilen beenden.</li>
     <li><strong>Gesundheitsdaten verlassen Ihr Gerät nie.</strong> Herzfrequenz und Kalorien bleiben auf Watch und iPhone.</li>
     <li><strong>Käufe laufen über Apple und RevenueCat</strong> unter einer zufälligen Kennung, ohne Name oder E-Mail.</li>
     <li><strong>Keine Werbung, kein Tracking, kein Datenverkauf.</strong></li>
@@ -169,19 +167,19 @@
   löschen" wählen.</p>
 
   <h2>Live-Teilen: eine Zeile, dann weg</h2>
-  <p>Wenn Sie aktiv teilen, speichert unser Server (Supabase, EU-Region
-  Frankfurt) genau eine Zeile für diese Sitzung: den sechsstelligen
-  Beitrittscode, die Sportart und den aktuellen Spielstand, also Punkte,
-  Spiele, Sätze und Aufschlag; die Namen der Spielerinnen und Spieler,
-  wenn Sie welche hinterlegt haben, damit Mitverfolgende sehen, wer
-  spielt, statt „Team A" und „Team B"; und die Endstände der Spiele, die
-  Sie in derselben Sitzung bereits beendet haben. Kein Konto, kein
-  Spielverlauf und kein Ereignisprotokoll werden hochgeladen. Eine
-  Sitzung umfasst die Spiele, die Sie nacheinander unter demselben Code
-  spielen: Die Zeile überdauert das Ende eines einzelnen Spiels und wird
-  gelöscht, sobald Sie das Teilen beenden, wenn zwei Stunden lang nichts
-  gesendet wurde, in jedem Fall aber spätestens 24 Stunden nach ihrer
-  Erstellung. Danach bleibt nichts davon zurück.</p>
+  <p>Wenn Sie ein Spiel aktiv teilen, speichert unser Server (Supabase,
+  EU-Region Frankfurt) genau eine Zeile für dieses Spiel: den
+  sechsstelligen Beitrittscode, die Sportart und den aktuellen
+  Spielstand, also Punkte, Spiele, Sätze und Aufschlag; und die Namen
+  der Spielerinnen und Spieler, wenn Sie welche hinterlegt haben, damit
+  Mitverfolgende sehen, wer spielt, statt „Team A" und „Team B". Kein
+  Konto, kein Spielverlauf und kein Ereignisprotokoll werden
+  hochgeladen. Ein geteiltes Spiel ist genau ein Spiel: Die Zeile wird
+  gelöscht, sobald das Spiel endet oder Sie das Teilen beenden, wenn
+  sich der Spielstand zwei Stunden lang nicht geändert hat, in jedem
+  Fall aber spätestens 24 Stunden nach ihrer Erstellung. Das nächste
+  Spiel, das Sie teilen, erhält einen neuen Code und eine neue Zeile.
+  Danach bleibt nichts davon zurück.</p>
   <p>Wer Ihr Spiel mitverfolgt, braucht kein Konto. Wir speichern nicht,
   wer zugesehen hat. Rechtsgrundlage: Erfüllung der von Ihnen aktiv
   gestarteten Teilen-Funktion (Art. 6 Abs. 1 lit. b DSGVO).</p>
@@ -228,9 +226,9 @@
   einer Datenschutzaufsichtsbehörde.</p>
   <p>Praktisch halten Sie den Löschschlüssel selbst in der Hand, weil
   Rally lokal arbeitet: Einstellungen &gt; App zurücksetzen oder das
-  Löschen der App entfernt Ihren Verlauf, ein
-  eine Teilen-Sitzung löscht sich selbst, sobald Sie das Teilen beenden
-  oder sie abläuft,
+  Löschen der App entfernt Ihren Verlauf, ein geteiltes Spiel löscht
+  sich selbst, sobald das Spiel endet, Sie das Teilen beenden oder es
+  abläuft,
   und die gehashten Zähler des Missbrauchsschutzes verschwinden von
   allein innerhalb von etwa einer Stunde. Der kostenlose Export ist Ihre
   Datenübertragbarkeit. Für den einen Datensatz außerhalb Ihres Geräts,

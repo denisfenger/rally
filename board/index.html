@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <!-- Rally live scoreboard (static, GitHub Pages).
      Followers are free and account-less by product law: this page needs no
-     login, loads NO external script or style, and stores nothing. It joins a
-     share through the share-join edge function (POST {code}) and then polls
-     share-state (POST {shareId}) over plain fetch: every 2.5 s, one request
-     in flight at a time, backing off to 10 s after three consecutive
-     failures, pausing while the tab is hidden and resuming on
-     visibilitychange.
+     login, loads NO external script or style, and stores nothing about the
+     match. It joins a share through the share-join edge function (POST
+     {code}) and then polls share-state (POST {shareId}) over plain fetch:
+     every 2.5 s, one request in flight at a time, backing off to 10 s
+     after three consecutive failures, pausing while the tab is hidden and
+     resuming on visibilitychange.
      Request and response shapes: supabase/functions/share-join/index.ts and
      supabase/functions/share-state/index.ts. share-state carries no per-IP
      rate limit by design (a club's Wi-Fi is one address); share-join keeps
      its 30 per 10 minutes against code guessing.
-     A SHARE IS A SESSION, not a match (feedback round 7, decision 12): the
-     host keeps the same code across consecutive matches. So the page tracks
-     the relay's matchId; when it changes the seq guard restarts (the next
-     match numbers its snapshots from 1 again) and the finished match moves
-     into the session strip. A match that ends is NOT the end of the follow:
-     it shows the last score with "waiting for the next match" and keeps
-     polling. The ONLY terminal state is a 404 from share-join or
-     share-state, which means the row is gone (the host stopped sharing or
-     the session idled out).
-     Participants' NAMES travel with a share (decision 10): the tiles read
-     "Denis & Eric" instead of Team A, shortened to the shortest unambiguous
-     form within the match (decision 11). Ids never reach this page.
+     A SHARE IS A MATCH (feedback round 14, decision 6, reversing round 7
+     decision 12): a code covers one match. The host's final uplink is the
+     ended snapshot, which this page renders as the result (winner tag, no
+     serve dot, the status worded as a result), and share-end deletes the
+     row right after it, so the 404 that follows from share-state is the
+     end of the follow. A 404 without an ended snapshot means the host
+     stopped sharing mid-match (or the share idled out): the last score
+     stays with "sharing ended". Nothing rolls over to a next match under
+     the same code; the next match has a new code.
+     YOUR TEAM (decision 7): Team A, Team B or Neutral, default Neutral,
+     remembered in localStorage (the one thing this page stores, a viewer
+     preference, never anything about the match). Picking a side marks that
+     tile as yours and words the result from your side ("you won"); the
+     colours NEVER change: blue is the host's team and clay the other on
+     every Rally screen, so "which colour are we" has one answer.
+     Participants' NAMES travel with a share (round 7, decision 10): the
+     tiles read "Denis & Eric" instead of Team A, shortened to the shortest
+     unambiguous form within the match (decision 11). Ids never reach this
+     page.
      The anon key is public by design: it grants nothing, the table is
      service-role-only and every mutation goes through edge functions.
      The rendering is the scoreboard the app's Board and follow screen use:
      blue left = the host's side, clay right = the other side, sets table,
      serve dot, stale dot amber after 20 s without a successful poll.
      The app links here through boardUrl() in src/links.ts; the URL shape is
-     board/?code=123456 and must stay stable. -->
+     board/?code=123456 and must stay stable.
+     Verified by scripts/verify-board.mjs (headless Edge, the two POSTs
+     answered by a scripted relay). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -104,10 +113,19 @@
   /* The side label above the points: the participants' names when the
      share carries them (decision 10), else Team A / Team B. Same idiom
      as the app's tiles (13 pt, uppercase, ink-soft). */
-  .side-name { font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+  .side-name { display: flex; align-items: center; justify-content: center;
+    gap: 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--muted); max-width: 100%;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-align: center; }
+  .side-name .label { overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
+  /* "you": the follower's own side (decision 7). A small pill next to
+     the name; the tile's colour is its team's and does not move. */
+  .side-name .you { display: none; font-size: 10px; letter-spacing: 0.08em;
+    padding: 2px 6px; border-radius: 999px; border: 1px solid var(--text);
+    color: var(--text); flex: none; }
+  .side.mine .side-name .you { display: inline-block; }
+  .side.mine .side-name { color: var(--text); }
   .points { font-size: clamp(64px, 18vw, 148px); font-weight: 700;
     line-height: 1; font-variant-numeric: tabular-nums; }
   .side.a .points { color: var(--us); }
@@ -128,39 +146,24 @@
   #setsTable tr.a td { color: var(--us); }
   #setsTable tr.b td { color: var(--them); }
   #setsTable td sup { font-size: 11px; color: var(--muted); margin-left: 2px; }
-  /* Between the matches of a session: the last score stays above, this
-     says why nothing moves. */
-  #waiting { display: none; flex-direction: column; align-items: center;
-    gap: 6px; padding: 16px 20px; border: 1px solid var(--line);
-    border-radius: 12px; background: var(--panel); max-width: 100%; }
-  #waiting.show { display: flex; }
-  #waitingTitle { font-size: 16px; font-weight: 600; text-align: center; }
-  #waitingHint { font-size: 14px; color: var(--muted); text-align: center;
-    max-width: 36em; }
-  /* The session strip (decision 12): the matches finished earlier under
-     this code, oldest first. */
-  #session { display: none; flex-direction: column; gap: 10px;
-    padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px;
-    background: var(--panel); width: 100%; max-width: 420px; }
-  #session.show { display: flex; }
-  #sessionLabel { font-size: 12px; letter-spacing: 0.1em;
+  /* Your team (decision 7): a segmented control, Team A left and Team B
+     right like the tiles, Neutral between them. Neutral-styled on
+     purpose: the team colours belong to the tiles. */
+  #team { display: flex; flex-direction: column; align-items: center;
+    gap: 8px; max-width: 100%; }
+  #teamLabel { font-size: 12px; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--muted); }
-  #sessionList { list-style: none; margin: 0; padding: 0; display: flex;
-    flex-direction: column; gap: 8px; }
-  .s-row { display: flex; align-items: baseline; flex-wrap: wrap;
-    gap: 4px 12px; font-size: 14px; }
-  .s-sport { flex: 1 1 auto; min-width: 0; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-  .s-units { font-size: 16px; font-weight: 600; flex: none;
-    font-variant-numeric: tabular-nums; }
-  .s-units .a { color: var(--us); }
-  .s-units .b { color: var(--them); }
-  .s-units .sep { color: var(--muted); }
-  .s-pairs { color: var(--muted); flex: none; display: inline-flex;
-    gap: 10px; font-variant-numeric: tabular-nums; }
-  #sessionLive { display: none; font-size: 12px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text); }
-  #sessionLive.show { display: block; }
+  #teamChoices { display: inline-flex; border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; max-width: 100%; }
+  #teamChoices button { background: var(--panel); color: var(--muted);
+    border: 0; border-right: 1px solid var(--line); font-size: 14px;
+    font-weight: 600; padding: 10px 16px; cursor: pointer; max-width: 40vw;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #teamChoices button:last-child { border-right: 0; }
+  #teamChoices button:hover { color: var(--text); }
+  #teamChoices button:active { background: var(--line); }
+  #teamChoices button[aria-pressed="true"] { background: var(--line);
+    color: var(--text); }
   #codeLabel { font-size: 13px; color: var(--muted);
     letter-spacing: 0.14em; }
   #joinForm { display: none; flex-direction: column; align-items: center;
@@ -175,6 +178,8 @@
   #joinForm button { background: var(--us); color: #08111C; border: 0;
     font-size: 16px; font-weight: 600; padding: 12px 32px;
     border-radius: 10px; cursor: pointer; }
+  #joinForm button:hover { filter: brightness(1.08); }
+  #joinForm button:active { filter: brightness(0.92); }
   #joinError { color: var(--them); font-size: 14px; min-height: 18px;
     margin: 0; }
   #board { display: none; flex-direction: column; align-items: center;
@@ -202,7 +207,7 @@
     </div>
     <div id="score">
       <div class="side a" id="sideA">
-        <div class="side-name" id="nameA">Team A</div>
+        <div class="side-name" id="nameA"><span class="label">Team A</span><span class="you">you</span></div>
         <span class="winner-tag">winner</span>
         <div class="points" id="pointsA">0</div>
         <span class="serve"></span>
@@ -213,23 +218,21 @@
         <tr class="b" id="rowB"></tr>
       </table>
       <div class="side b" id="sideB">
-        <div class="side-name" id="nameB">Team B</div>
+        <div class="side-name" id="nameB"><span class="label">Team B</span><span class="you">you</span></div>
         <span class="winner-tag">winner</span>
         <div class="points" id="pointsB">0</div>
         <span class="serve"></span>
         <div class="sets-won">sets <b id="setsB">0</b></div>
       </div>
     </div>
-    <div id="waiting">
-      <div id="waitingTitle">Waiting for the next match</div>
-      <div id="waitingHint">The host keeps sharing. The next match appears
-        here on its own.</div>
+    <div id="team">
+      <div id="teamLabel">Your team</div>
+      <div id="teamChoices" role="group" aria-label="Your team">
+        <button type="button" data-team="A" aria-pressed="false">Team A</button>
+        <button type="button" data-team="N" aria-pressed="true">Neutral</button>
+        <button type="button" data-team="B" aria-pressed="false">Team B</button>
+      </div>
     </div>
-    <section id="session" aria-label="earlier in this session">
-      <div id="sessionLabel">Earlier in this session</div>
-      <ol id="sessionList"></ol>
-      <div id="sessionLive">Live now</div>
-    </section>
     <div id="codeLabel"></div>
   </section>
 </main>
@@ -244,7 +247,7 @@
   var POLL_SLOW_MS = 10000;      // after SLOW_AFTER consecutive failures
   var SLOW_AFTER = 3;
   var STALE_MS = 20000;          // amber dot without a successful poll
-  var RESULTS_CAP = 20;          // the relay's own cap on a session's results
+  var TEAM_KEY = "rally.board.team";   // the one thing this page stores
 
   // The sport ids the relay carries (src/sportCatalog.ts), lowercased for
   // the header the same way the app's chips read.
@@ -258,19 +261,17 @@
   var el = function (id) { return document.getElementById(id); };
   var shareId = null;
   var curSeq = -1;
-  var curMatchId = null;         // the session's current match, per the relay
   var curSport = "";
   var lastSnapshot = null;
   var names = null;              // {teamA: [names], teamB: [names]} or null
-  var relayResults = [];         // finished matches, as the relay lists them
-  var localResults = [];         // rollovers seen here before the relay listed
-  var matchOver = false;         // the CURRENT match ended; session lives on
-  var sessionOver = false;       // terminal: the row is gone (404)
+  var matchOver = false;         // the ended snapshot arrived: the result
+  var shareOver = false;         // terminal: the row is gone (404)
   var lastOk = 0;                // time of the last successful join or poll
   var joined = false;
   var inFlight = false;
   var failures = 0;
   var timer = null;
+  var team = readTeam();         // "A" | "B" | "N" (neutral)
 
   function showForm(message) {
     el("board").classList.remove("show");
@@ -295,6 +296,54 @@
     if (typeof id !== "string" || id.length === 0) return "rally";
     return SPORTS[id] || id;
   }
+
+  // --- Your team (decision 7) ------------------------------------------
+
+  function readTeam() {
+    try {
+      var v = localStorage.getItem(TEAM_KEY);
+      return v === "A" || v === "B" ? v : "N";
+    } catch (e) {
+      return "N";
+    }
+  }
+
+  function writeTeam(v) {
+    try {
+      if (v === "N") localStorage.removeItem(TEAM_KEY);
+      else localStorage.setItem(TEAM_KEY, v);
+    } catch (e) {
+      // A private window or blocked storage: the choice lasts the page.
+    }
+  }
+
+  function setTeam(v) {
+    team = v === "A" || v === "B" ? v : "N";
+    writeTeam(team);
+    renderTeam();
+    renderNames();
+    if (lastSnapshot) renderResult(lastSnapshot);
+    setStatus();
+  }
+
+  function renderTeam() {
+    var buttons = el("teamChoices").querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) {
+      var b = buttons[i];
+      b.setAttribute("aria-pressed", b.getAttribute("data-team") === team ? "true" : "false");
+    }
+    el("sideA").classList.toggle("mine", team === "A");
+    el("sideB").classList.toggle("mine", team === "B");
+  }
+
+  el("teamChoices").addEventListener("click", function (e) {
+    var target = e.target;
+    while (target && target !== this && !(target.tagName === "BUTTON")) {
+      target = target.parentNode;
+    }
+    if (!target || target === this) return;
+    setTeam(target.getAttribute("data-team"));
+  });
 
   // --- Participants (decision 10) -------------------------------------
 
@@ -342,7 +391,9 @@
     });
   }
 
-  function renderNames() {
+  // The two side labels: the names when the share carries them, else
+  // Team A and Team B.
+  function sideLabels() {
     var labelA = "Team A";
     var labelB = "Team B";
     if (names) {
@@ -353,152 +404,19 @@
       if (a.length > 0) labelA = a.join(" & ");
       if (b.length > 0) labelB = b.join(" & ");
     }
-    el("nameA").textContent = labelA;
-    el("nameB").textContent = labelB;
+    return { a: labelA, b: labelB };
   }
 
-  // --- Session results (decision 12) -----------------------------------
-
-  function readPair(value) {
-    if (!Array.isArray(value) || value.length < 2) return null;
-    if (typeof value[0] !== "number" || typeof value[1] !== "number") {
-      return null;
+  function renderNames() {
+    var labels = sideLabels();
+    el("nameA").querySelector(".label").textContent = labels.a;
+    el("nameB").querySelector(".label").textContent = labels.b;
+    var buttons = el("teamChoices").querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) {
+      var side = buttons[i].getAttribute("data-team");
+      if (side === "A") buttons[i].textContent = labels.a;
+      else if (side === "B") buttons[i].textContent = labels.b;
     }
-    return [value[0], value[1]];
-  }
-
-  function readResults(raw) {
-    if (!Array.isArray(raw)) return [];
-    var out = [];
-    for (var i = 0; i < raw.length; i++) {
-      var entry = raw[i];
-      if (typeof entry !== "object" || entry === null) continue;
-      if (typeof entry.matchId !== "string" || entry.matchId.length === 0) {
-        continue;
-      }
-      var pairs = [];
-      if (Array.isArray(entry.setPairs)) {
-        for (var p = 0; p < entry.setPairs.length; p++) {
-          var pair = readPair(entry.setPairs[p]);
-          if (pair) pairs.push(pair);
-        }
-      }
-      out.push({
-        matchId: entry.matchId,
-        sport: typeof entry.sport === "string" ? entry.sport : "",
-        setPairs: pairs,
-        winner: entry.winner === "A" || entry.winner === "B"
-          ? entry.winner
-          : null
-      });
-    }
-    return out.slice(-RESULTS_CAP);
-  }
-
-  // What the relay stores when a match leaves the current slot; kept here
-  // only until the next poll lists it, so the strip never blinks empty.
-  function rememberFinished() {
-    if (!curMatchId || !lastSnapshot) return;
-    var pairs = [];
-    if (Array.isArray(lastSnapshot.gamesBySet)) {
-      for (var i = 0; i < lastSnapshot.gamesBySet.length; i++) {
-        var pair = readPair(lastSnapshot.gamesBySet[i]);
-        if (pair) pairs.push(pair);
-      }
-    }
-    var winner = lastSnapshot.winner === "A" || lastSnapshot.winner === "B"
-      ? lastSnapshot.winner
-      : null;
-    // A match discarded before its first point is not a result (the relay
-    // drops it too).
-    var scored = winner !== null || pairs.some(function (p) {
-      return p[0] > 0 || p[1] > 0;
-    });
-    if (!scored) return;
-    var id = curMatchId;
-    localResults = localResults.filter(function (r) {
-      return r.matchId !== id;
-    });
-    localResults.push({
-      matchId: id, sport: curSport, setPairs: pairs, winner: winner
-    });
-    localResults = localResults.slice(-RESULTS_CAP);
-  }
-
-  function sessionResults() {
-    var out = relayResults.slice();
-    var seen = {};
-    out.forEach(function (r) { seen[r.matchId] = true; });
-    localResults.forEach(function (r) {
-      if (!seen[r.matchId] && r.matchId !== curMatchId) out.push(r);
-    });
-    return out.slice(-RESULTS_CAP);
-  }
-
-  // Outer units won, ignoring a last unit still in progress (the app's
-  // partitionPairs rule: a match ended by hand keeps its open set).
-  function unitsWon(result) {
-    var pairs = result.setPairs.slice();
-    var inProgress = -1;
-    if (result.winner === null && pairs.length > 0) {
-      var last = pairs[pairs.length - 1];
-      if (last[0] === 0 && last[1] === 0 && pairs.length > 1) pairs.pop();
-      else inProgress = pairs.length - 1;
-    }
-    var won = [0, 0];
-    pairs.forEach(function (pair, i) {
-      if (i === inProgress) return;
-      if (pair[0] > pair[1]) won[0] += 1;
-      else if (pair[1] > pair[0]) won[1] += 1;
-    });
-    return { won: won, pairs: pairs };
-  }
-
-  function resultRow(result) {
-    var counted = unitsWon(result);
-    var li = document.createElement("li");
-    li.className = "s-row";
-    var sport = document.createElement("span");
-    sport.className = "s-sport";
-    sport.textContent = sportLabel(result.sport);
-    li.appendChild(sport);
-    var units = document.createElement("span");
-    units.className = "s-units";
-    var a = document.createElement("span");
-    a.className = "a";
-    a.textContent = String(counted.won[0]);
-    var sep = document.createElement("span");
-    sep.className = "sep";
-    sep.textContent = ":";
-    var b = document.createElement("span");
-    b.className = "b";
-    b.textContent = String(counted.won[1]);
-    units.appendChild(a);
-    units.appendChild(sep);
-    units.appendChild(b);
-    li.appendChild(units);
-    var pairs = document.createElement("span");
-    pairs.className = "s-pairs";
-    counted.pairs.forEach(function (pair) {
-      var span = document.createElement("span");
-      span.textContent = pair[0] + ":" + pair[1];
-      pairs.appendChild(span);
-    });
-    li.appendChild(pairs);
-    return li;
-  }
-
-  function renderSession() {
-    var list = sessionResults();
-    var box = el("session");
-    var out = el("sessionList");
-    out.textContent = "";
-    list.forEach(function (result) { out.appendChild(resultRow(result)); });
-    box.classList.toggle("show", list.length > 0);
-    el("sessionLive").classList.toggle(
-      "show", list.length > 0 && !sessionOver && !matchOver
-    );
-    el("waiting").classList.toggle("show", matchOver && !sessionOver);
   }
 
   // --- The live match ---------------------------------------------------
@@ -534,15 +452,40 @@
       rowB.appendChild(tdB);
     }
 
-    var live = !matchOver && !sessionOver;
+    // The serve dot follows the engine's server while the match is live;
+    // an ended snapshot (or a share that is gone) shows no server, and
+    // the engine says "no server" itself for a custom game without a
+    // serve rule (round 14, decision 3).
+    var live = !matchOver && !shareOver;
     el("sideA").classList.toggle("serving", live && snap.server === "A");
     el("sideB").classList.toggle("serving", live && snap.server === "B");
-    el("sideA").classList.toggle("won", snap.winner === "A");
-    el("sideB").classList.toggle("won", snap.winner === "B");
+    renderResult(snap);
   }
 
-  // Within a match the seq only moves forward. A rollover resets the
-  // guard before this runs (the next match numbers from 1 again).
+  // The result, worded from the chosen side (decision 7): "you won" or
+  // "you lost" for a side, "Team A won" (or the names) for Neutral, and
+  // "match ended" for a match ended by hand with no winner.
+  function resultTitle(snap) {
+    var winner = snap && (snap.winner === "A" || snap.winner === "B") ? snap.winner : null;
+    if (winner === null) return "match ended";
+    if (team === "A" || team === "B") return team === winner ? "you won" : "you lost";
+    var labels = sideLabels();
+    return (winner === "A" ? labels.a : labels.b) + " won";
+  }
+
+  function renderResult(snap) {
+    el("sideA").classList.toggle("won", snap.winner === "A");
+    el("sideB").classList.toggle("won", snap.winner === "B");
+    if (matchOver) {
+      el("bannerTitle").textContent = resultTitle(snap);
+      el("bannerHint").textContent = "";
+      el("banner").classList.add("show");
+    } else if (!shareOver) {
+      el("banner").classList.remove("show");
+    }
+  }
+
+  // Within a match the seq only moves forward.
   function applySnapshot(seq, snap) {
     if (typeof seq !== "number" || seq <= curSeq || !snap) return;
     curSeq = seq;
@@ -551,63 +494,55 @@
     renderSnapshot(snap);
   }
 
-  // One relay answer (share-join or share-state), session-aware.
-  function applySession(data) {
-    var incoming = typeof data.matchId === "string" && data.matchId.length > 0
-      ? data.matchId
-      : null;
-    if (incoming && curMatchId && incoming !== curMatchId) {
-      // The session rolled over to the next match: the finished one goes
-      // into the strip, the seq guard and the ended state restart.
-      rememberFinished();
-      curMatchId = incoming;
-      curSeq = -1;
-      matchOver = false;
-      lastSnapshot = null;
-    } else if (incoming && !curMatchId) {
-      curMatchId = incoming;
-    }
+  // One relay answer (share-join or share-state).
+  function applyShare(data) {
     if (typeof data.sport === "string" && data.sport.length > 0) {
       curSport = data.sport;
       el("sport").textContent = sportLabel(curSport);
     }
     names = readParticipants(data.participants);
     renderNames();
-    relayResults = readResults(data.results);
     applySnapshot(data.seq, data.snapshot);
-    renderSession();
+    if (lastSnapshot) renderResult(lastSnapshot);
     setStatus();
   }
 
-  // The session is gone (404 on join or poll): the only terminal state.
-  // A match that merely ended keeps the page polling for the next one.
-  function markSessionEnded() {
-    if (sessionOver) return;
-    sessionOver = true;
+  // The share is gone (404 on join or poll): the terminal state. After an
+  // ended snapshot it is the expected end of the match's share; without
+  // one the host stopped sharing mid-match, or the share idled out.
+  function markShareEnded() {
+    if (shareOver) return;
+    shareOver = true;
     clearTimeout(timer);
-    el("bannerTitle").textContent = matchOver ? "match ended" : "sharing ended";
-    el("bannerHint").textContent = matchOver
-      ? ""
-      : "The host stopped sharing. The score above is the last one received.";
+    if (matchOver && lastSnapshot) {
+      el("bannerTitle").textContent = resultTitle(lastSnapshot);
+      el("bannerHint").textContent = "";
+    } else {
+      el("bannerTitle").textContent = "sharing ended";
+      el("bannerHint").textContent =
+        "The host stopped sharing. The score above is the last one received.";
+    }
     el("banner").classList.add("show");
     el("sideA").classList.remove("serving");
     el("sideB").classList.remove("serving");
-    renderSession();
     setStatus();
   }
 
   function setStatus() {
     if (!joined) return;
-    if (sessionOver) {
-      el("statusText").textContent = "ended";
+    if (shareOver) {
+      el("statusText").textContent = matchOver && lastSnapshot ? resultTitle(lastSnapshot) : "ended";
+      el("dot").className = "off";
+      return;
+    }
+    if (matchOver && lastSnapshot) {
+      el("statusText").textContent = resultTitle(lastSnapshot);
       el("dot").className = "off";
       return;
     }
     var stale = Date.now() - lastOk > STALE_MS;
     el("dot").className = stale ? "stale" : "";
-    el("statusText").textContent = stale
-      ? "stale"
-      : matchOver ? "waiting for the next match" : "live";
+    el("statusText").textContent = stale ? "stale" : "live";
   }
 
   // One JSON POST to an edge function. Resolves {status, data}; data is
@@ -633,18 +568,19 @@
 
   function schedule(ms) {
     clearTimeout(timer);
-    if (sessionOver || !joined || document.hidden) return;
+    if (shareOver || !joined || document.hidden) return;
     timer = setTimeout(poll, ms);
   }
 
   function poll() {
-    if (sessionOver || !joined || inFlight || document.hidden) return;
+    if (shareOver || !joined || inFlight || document.hidden) return;
     inFlight = true;
     post("/share-state", { shareId: shareId }).then(function (res) {
       inFlight = false;
       if (res.status === 404) {
-        // Row gone: the host ended the SESSION or it expired.
-        markSessionEnded();
+        // Row gone: the share ended (the match ended and share-end
+        // followed, the host stopped, or the TTL swept it).
+        markShareEnded();
         return;
       }
       if (!res.data) {
@@ -654,7 +590,7 @@
       }
       failures = 0;
       lastOk = Date.now();
-      applySession(res.data);
+      applyShare(res.data);
       schedule(POLL_MS);
     }, function () {
       inFlight = false;
@@ -685,7 +621,8 @@
       el("codeLabel").textContent = "code " + code;
       el("dot").className = "";
       el("statusText").textContent = "live";
-      applySession(res.data);
+      renderTeam();
+      applyShare(res.data);
       setInterval(setStatus, 1000);
       schedule(POLL_MS);
     }, function () {
@@ -698,12 +635,13 @@
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
       clearTimeout(timer);
-    } else if (joined && !sessionOver) {
+    } else if (joined && !shareOver) {
       clearTimeout(timer);
       poll();
     }
   });
 
+  renderTeam();
   var code = (new URLSearchParams(location.search).get("code") || "").trim();
   if (CODE_RE.test(code)) {
     start(code);

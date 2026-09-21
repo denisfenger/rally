@@ -20,7 +20,8 @@ privacy/index.html   privacy policy, EN with the DE version beneath
 terms/index.html     terms of use, EN with the DE version beneath
 support/index.html   contact, what the app is, common questions
 impressum/index.html legal notice (address, register and VAT ID: TODO Denis)
-board/index.html     live scoreboard for a share code (self-contained)
+board/index.html     live scoreboard for a share code (self-contained;
+                     verified by scripts/verify-board.mjs)
 ```
 
 ## How it is published
@@ -64,7 +65,9 @@ Later content pushes work with the headless git recipe.
 - NO external requests: system font stack, no Google Fonts, no CDN, no
   analytics, no remote images. The only network calls on the whole
   site are the board's two edge-function POSTs to the Supabase project
-  (`share-join`, `share-state`). Verify with
+  (`share-join`, `share-state`). The board stores ONE viewer preference
+  in localStorage (Your team, decision 7) and nothing about any match.
+  Verify with
   `grep -rn "http[s]*://" site/` before every push: the supabase.co
   calls in `board/index.html` and `mailto:` links are the only hits
   allowed (plus the SVG namespace in `icon.svg`).
@@ -84,35 +87,40 @@ consecutive failures, pauses while the tab is hidden and resumes on
 successful poll. No `?code=` shows the entry form, which submits to
 `board/?code=` so the URL shape the app shares stays stable.
 
-A SHARE IS A SESSION (feedback round 7, decision 12), and since the
-round-8 relay deploy the live endpoints carry it, so the page does
-too:
+A SHARE IS A MATCH (feedback round 14, decision 6, reversing round 7
+decision 12), so the page is one match long:
 
-- it tracks the relay's `matchId`. A new id is the next match of the
-  same session: the seq guard restarts (the new match numbers its
-  snapshots from 1 again) and the finished match moves into the
-  session strip under the score, oldest first, with its own sport,
-  the outer units won in the team colors and the set pairs;
-- a match that ENDS is not the end of the follow. The last score
-  stays with "Waiting for the next match" and the polling continues,
-  so the next match appears on its own;
-- the ONLY terminal state is a 404 from `share-join` or `share-state`
-  (the host stopped sharing, or the session idled past the relay's
-  TTL). The banner then reads "match ended" when the last match was
-  decided and "sharing ended", with one explaining line, when the
-  share stopped mid-match;
+- the host's final uplink is the ENDED snapshot, rendered as the
+  result: the winner tag on the winning tile, no serve dot, the
+  status and the banner worded as a result. share-end deletes the row
+  right after it, so the 404 that follows from `share-state` is the
+  end of the follow: polling stops, the result stays on screen;
+- a 404 WITHOUT an ended snapshot (the host stopped sharing
+  mid-match, or the share idled past the relay's 2 h TTL) keeps the
+  last score with "sharing ended" and one explaining line;
+- nothing rolls over: a new `matchId` under the same code cannot
+  happen on a round 14 host, and the page has no session strip and no
+  "waiting for the next match" state any more;
+- YOUR TEAM (decision 7): a Team A / Neutral / Team B control under
+  the score, Neutral by default. A side marks its tile with "you" and
+  words the result from that side ("you won", "you lost"); Neutral
+  words it as "Team A won" (or the names). The choice is remembered
+  in localStorage under `rally.board.team` (the only thing the page
+  stores). The tile COLOURS never change with it: blue is the host's
+  team and clay the other on every Rally screen;
 - participants' NAMES travel with a share (decision 10). When
-  `participants` is present the tiles read them, joined with " & " and
-  shortened to the shortest unambiguous form within the match
-  (decision 11: first name, then first name plus surname initial, then
-  the full name). Without them the tiles read Team A and Team B. Ids
-  never reach this page, and a name change mid-session relabels the
-  tiles on the next poll, without a point.
+  `participants` is present the tiles and the chooser read them,
+  joined with " & " and shortened to the shortest unambiguous form
+  within the match (decision 11: first name, then first name plus
+  surname initial, then the full name). Without them they read Team A
+  and Team B. Ids never reach this page, and a name change mid-match
+  relabels the tiles on the next poll, without a point.
 
-Before this the page froze on the first finished match of a session
+Round 7's session page froze on the first finished match of a session
 (the `seq <= curSeq` guard dropped the next match's seq 1, and the
 ended flag cleared the poll timer for good), which a live smoke test
-caught on 2026-09-18.
+caught on 2026-09-18; the per-match page has one seq space for its
+whole life.
 
 Why polling and not Realtime: the earlier board pulled `supabase-js`
 from a CDN for the broadcast channel, which the no-external-requests
@@ -147,14 +155,18 @@ so a 390 capture would show a cropped 476-wide layout; the protocol's
 device-metrics emulation renders the true width and can compute
 styles, which `--dump-dom` cannot.
 
-The harness covers the LANDING. The board is verified against the
-REAL relay instead, because its whole contract is the relay's: a
-throwaway session is created through `share-create`, driven with
-`share-uplink` (points, an ended snapshot, a second `matchId` that
-rolls the session over, a name change on a stale seq) and closed with
-`share-end`, while the page runs in the same headless Edge on a local
-static server and every state is read back out of the DOM. Last run
-2026-09-18: 75 checks, all green, zero rows left in `shared_matches`.
-Re-run it after any change to `board/index.html` or to the share edge
-functions; a session costs two `share-create` calls against the
-10-per-10-minutes limit.
+The harness covers the LANDING. `node scripts/verify-board.mjs`
+covers the BOARD: the same headless Edge, with the DevTools Fetch
+domain answering the page's two edge-function POSTs from a scripted
+relay, so every state is reached deterministically and read back out
+of the DOM: the live score, the ended snapshot as the result, the 404
+as the end (polling stops), the mid-match stop, Your team (default,
+marking, wording, persistence across a reload, colours unchanged), the
+names on tiles and chooser, the entry form's three answers, no request
+beyond the two POSTs, no console error, no overflow at 390 and 1280.
+Last run 2026-09-21: 57 checks, all green. Run it after ANY change to
+`board/index.html`. A live smoke test against the deployed relay
+(share-create, share-uplink with an ended snapshot, share-end, the
+page on a local static server) is still worth one run before a
+release; it costs one `share-create` against the 10-per-10-minutes
+limit.
