@@ -20,12 +20,23 @@
      stopped sharing mid-match (or the share idled out): the last score
      stays with "sharing ended". Nothing rolls over to a next match under
      the same code; the next match has a new code.
-     YOUR TEAM (decision 7): Team A, Team B or Neutral, default Neutral,
-     remembered in localStorage (the one thing this page stores, a viewer
-     preference, never anything about the match). Picking a side marks that
-     tile as yours and words the result from your side ("you won"); the
-     colours NEVER change: blue is the host's team and clay the other on
-     every Rally screen, so "which colour are we" has one answer.
+     YOUR TEAM (decision 7): Team A, Team B or Neutral, default Neutral.
+     Picking a side marks that tile as yours and words the result from your
+     side ("you won"); the colours NEVER change: blue is the host's team and
+     clay the other on every Rally screen, so "which colour are we" has one
+     answer. The choice belongs to ONE SHARE (round 14 verify): it is
+     remembered in localStorage together with the share id it was made
+     for, so the same code on a reload keeps it and any other share
+     starts Neutral again, the way the app's follow screens do. A side
+     in a match last week says nothing about who you are in this one.
+     SWAP SIDES (decision 7): a per-device VIEW setting, the same one the
+     Board and the watch have. It swaps which team is drawn left and right
+     on this browser, for every share; the colours stay with their teams,
+     the serve dot follows its team, the names follow their tiles, and
+     the round-1 default (the host's team left) is what everyone who never
+     touches it keeps. Remembered in localStorage per browser.
+     Those two viewer preferences are ALL this page stores; never anything
+     about the match.
      Participants' NAMES travel with a share (round 7, decision 10): the
      tiles read "Denis & Eric" instead of Team A, shortened to the shortest
      unambiguous form within the match (decision 11). Ids never reach this
@@ -146,24 +157,49 @@
   #setsTable tr.a td { color: var(--us); }
   #setsTable tr.b td { color: var(--them); }
   #setsTable td sup { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  /* Swap sides (decision 7): the two tiles change places, and so do the
+     two team buttons of the chooser, so a button always sits under its
+     tile. Pure order: every tile keeps its class, its colour, its serve
+     dot and its label. On a phone the sets table still drops beneath
+     (order 2 and 3 above outrank -1 and 1). */
+  #board.swapped #sideA { order: 1; }
+  #board.swapped #sideB { order: -1; }
+  #board.swapped #teamChoices button[data-team="A"] { order: 1; }
+  #board.swapped #teamChoices button[data-team="B"] { order: -1; }
   /* Your team (decision 7): a segmented control, Team A left and Team B
      right like the tiles, Neutral between them. Neutral-styled on
-     purpose: the team colours belong to the tiles. */
+     purpose: the team colours belong to the tiles. The separators are
+     the 1 px gaps over the group's line-coloured background, so they
+     hold whichever order the buttons are drawn in. */
   #team { display: flex; flex-direction: column; align-items: center;
     gap: 8px; max-width: 100%; }
   #teamLabel { font-size: 12px; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--muted); }
-  #teamChoices { display: inline-flex; border: 1px solid var(--line);
-    border-radius: 10px; overflow: hidden; max-width: 100%; }
+  #teamRow { display: flex; align-items: center; gap: 10px;
+    max-width: 100%; }
+  #teamChoices { display: flex; gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    flex: 0 1 auto; min-width: 0; }
   #teamChoices button { background: var(--panel); color: var(--muted);
-    border: 0; border-right: 1px solid var(--line); font-size: 14px;
-    font-weight: 600; padding: 10px 16px; cursor: pointer; max-width: 40vw;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #teamChoices button:last-child { border-right: 0; }
+    border: 0; font-size: 14px; font-weight: 600; padding: 10px 16px;
+    cursor: pointer; flex: 0 1 auto; min-width: 0; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
   #teamChoices button:hover { color: var(--text); }
   #teamChoices button:active { background: var(--line); }
   #teamChoices button[aria-pressed="true"] { background: var(--line);
     color: var(--text); }
+  /* The swap toggle beside the chooser: an icon button in the same
+     idiom as the Board's (a round toggle next to Personal/Neutral); on,
+     the arrows take court blue. */
+  #swap { display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; flex: none; background: var(--panel);
+    color: var(--muted); border: 1px solid var(--line); border-radius: 10px;
+    cursor: pointer; padding: 0; }
+  #swap svg { width: 20px; height: 20px; display: block; }
+  #swap:hover { color: var(--text); }
+  #swap:active { background: var(--line); }
+  #swap[aria-pressed="true"] { background: var(--line); color: var(--us);
+    border-color: var(--us); }
   #codeLabel { font-size: 13px; color: var(--muted);
     letter-spacing: 0.14em; }
   #joinForm { display: none; flex-direction: column; align-items: center;
@@ -227,10 +263,18 @@
     </div>
     <div id="team">
       <div id="teamLabel">Your team</div>
-      <div id="teamChoices" role="group" aria-label="Your team">
-        <button type="button" data-team="A" aria-pressed="false">Team A</button>
-        <button type="button" data-team="N" aria-pressed="true">Neutral</button>
-        <button type="button" data-team="B" aria-pressed="false">Team B</button>
+      <div id="teamRow">
+        <div id="teamChoices" role="group" aria-label="Your team">
+          <button type="button" data-team="A" aria-pressed="false">Team A</button>
+          <button type="button" data-team="N" aria-pressed="true">Neutral</button>
+          <button type="button" data-team="B" aria-pressed="false">Team B</button>
+        </div>
+        <button type="button" id="swap" aria-pressed="false" aria-label="Swap sides" title="Swap sides">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M4 8h14"/><path d="M14 4l4 4-4 4"/>
+            <path d="M20 16H6"/><path d="M10 12l-4 4 4 4"/>
+          </svg>
+        </button>
       </div>
     </div>
     <div id="codeLabel"></div>
@@ -247,7 +291,12 @@
   var POLL_SLOW_MS = 10000;      // after SLOW_AFTER consecutive failures
   var SLOW_AFTER = 3;
   var STALE_MS = 20000;          // amber dot without a successful poll
-  var TEAM_KEY = "rally.board.team";   // the one thing this page stores
+  // The two viewer preferences this page stores, and nothing else:
+  // Your team as {"share": <shareId>, "team": "A"|"B"}, valid for that
+  // one share (a reload of the same code keeps it, another share
+  // starts Neutral); Swap sides as "1", per browser, for every share.
+  var TEAM_KEY = "rally.board.team";
+  var SWAP_KEY = "rally.board.swap";
 
   // The sport ids the relay carries (src/sportCatalog.ts), lowercased for
   // the header the same way the app's chips read.
@@ -271,7 +320,8 @@
   var inFlight = false;
   var failures = 0;
   var timer = null;
-  var team = readTeam();         // "A" | "B" | "N" (neutral)
+  var team = "N";                // "A" | "B" | "N" (neutral); read per share on join
+  var swapped = readSwap();      // per browser: team B drawn left
 
   function showForm(message) {
     el("board").classList.remove("show");
@@ -299,19 +349,30 @@
 
   // --- Your team (decision 7) ------------------------------------------
 
-  function readTeam() {
+  // The remembered side for THIS share, else Neutral. A value made for
+  // another share (or a bare "A"/"B" from before the choice was keyed
+  // by share) is not this match's and is dropped.
+  function readTeam(id) {
     try {
-      var v = localStorage.getItem(TEAM_KEY);
-      return v === "A" || v === "B" ? v : "N";
+      var raw = localStorage.getItem(TEAM_KEY);
+      if (!raw) return "N";
+      var v = null;
+      try { v = JSON.parse(raw); } catch (e) { v = null; }
+      if (v && typeof v === "object" && v.share === id &&
+          (v.team === "A" || v.team === "B")) {
+        return v.team;
+      }
+      localStorage.removeItem(TEAM_KEY);
+      return "N";
     } catch (e) {
       return "N";
     }
   }
 
-  function writeTeam(v) {
+  function writeTeam(id, v) {
     try {
       if (v === "N") localStorage.removeItem(TEAM_KEY);
-      else localStorage.setItem(TEAM_KEY, v);
+      else localStorage.setItem(TEAM_KEY, JSON.stringify({ share: id, team: v }));
     } catch (e) {
       // A private window or blocked storage: the choice lasts the page.
     }
@@ -319,12 +380,44 @@
 
   function setTeam(v) {
     team = v === "A" || v === "B" ? v : "N";
-    writeTeam(team);
+    if (shareId) writeTeam(shareId, team);
     renderTeam();
     renderNames();
     if (lastSnapshot) renderResult(lastSnapshot);
     setStatus();
   }
+
+  // --- Swap sides (decision 7) ------------------------------------------
+
+  function readSwap() {
+    try {
+      return localStorage.getItem(SWAP_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function writeSwap(on) {
+    try {
+      if (on) localStorage.setItem(SWAP_KEY, "1");
+      else localStorage.removeItem(SWAP_KEY);
+    } catch (e) {
+      // As above: the setting lasts the page.
+    }
+  }
+
+  // Only the drawing order changes: A stays A, B stays B, the colours,
+  // the serve dot and the names stay with their tiles.
+  function renderSwap() {
+    el("board").classList.toggle("swapped", swapped);
+    el("swap").setAttribute("aria-pressed", swapped ? "true" : "false");
+  }
+
+  el("swap").addEventListener("click", function () {
+    swapped = !swapped;
+    writeSwap(swapped);
+    renderSwap();
+  });
 
   function renderTeam() {
     var buttons = el("teamChoices").querySelectorAll("button");
@@ -621,6 +714,9 @@
       el("codeLabel").textContent = "code " + code;
       el("dot").className = "";
       el("statusText").textContent = "live";
+      // The side is this share's: the same code on a reload keeps it,
+      // any other share starts Neutral.
+      team = typeof shareId === "string" ? readTeam(shareId) : "N";
       renderTeam();
       applyShare(res.data);
       setInterval(setStatus, 1000);
@@ -642,6 +738,7 @@
   });
 
   renderTeam();
+  renderSwap();
   var code = (new URLSearchParams(location.search).get("code") || "").trim();
   if (CODE_RE.test(code)) {
     start(code);

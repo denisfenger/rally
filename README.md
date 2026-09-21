@@ -65,8 +65,9 @@ Later content pushes work with the headless git recipe.
 - NO external requests: system font stack, no Google Fonts, no CDN, no
   analytics, no remote images. The only network calls on the whole
   site are the board's two edge-function POSTs to the Supabase project
-  (`share-join`, `share-state`). The board stores ONE viewer preference
-  in localStorage (Your team, decision 7) and nothing about any match.
+  (`share-join`, `share-state`). The board stores TWO viewer
+  preferences in localStorage (Your team, per share, and Swap sides,
+  per browser; decision 7) and nothing about any match.
   Verify with
   `grep -rn "http[s]*://" site/` before every push: the supabase.co
   calls in `board/index.html` and `mailto:` links are the only hits
@@ -104,10 +105,23 @@ decision 12), so the page is one match long:
 - YOUR TEAM (decision 7): a Team A / Neutral / Team B control under
   the score, Neutral by default. A side marks its tile with "you" and
   words the result from that side ("you won", "you lost"); Neutral
-  words it as "Team A won" (or the names). The choice is remembered
-  in localStorage under `rally.board.team` (the only thing the page
-  stores). The tile COLOURS never change with it: blue is the host's
-  team and clay the other on every Rally screen;
+  words it as "Team A won" (or the names). The choice belongs to ONE
+  SHARE (round 14 verify: a side picked last week says nothing about
+  this match): it is remembered in localStorage under
+  `rally.board.team` as `{"share": <shareId>, "team": "A"|"B"}`, so a
+  reload of the same code keeps it and any other share starts Neutral
+  (the entry is dropped), the way the app's follow screens do. The
+  tile COLOURS never change with it: blue is the host's team and clay
+  the other on every Rally screen;
+- SWAP SIDES (decision 7): the arrows button beside the chooser, the
+  same per-device VIEW setting the Board and the watch have. On, team
+  B is drawn left and A right (on a desktop the sets table stays
+  between them; on a phone it stays beneath), the chooser's team
+  buttons change places with their tiles, and nothing else moves:
+  colours, serve dot, names and the sets table's rows stay with their
+  teams. Off is the round-1 default (the host's team left).
+  Remembered per browser under `rally.board.swap` = "1", for every
+  share. Those two keys are ALL the page stores;
 - participants' NAMES travel with a share (decision 10). When
   `participants` is present the tiles and the chooser read them,
   joined with " & " and shortened to the shortest unambiguous form
@@ -161,10 +175,14 @@ domain answering the page's two edge-function POSTs from a scripted
 relay, so every state is reached deterministically and read back out
 of the DOM: the live score, the ended snapshot as the result, the 404
 as the end (polling stops), the mid-match stop, Your team (default,
-marking, wording, persistence across a reload, colours unchanged), the
-names on tiles and chooser, the entry form's three answers, no request
-beyond the two POSTs, no console error, no overflow at 390 and 1280.
-Last run 2026-09-21: 57 checks, all green. Run it after ANY change to
+marking, wording, persistence across a reload of the SAME share,
+Neutral on another share and for a pre-keying value, colours
+unchanged), Swap sides (off by default; on, the drawn order of tiles
+and chooser flips while colours, serve dot, labels and DOM order stay;
+stored per browser and applied on another share), the names on tiles
+and chooser, the entry form's three answers, no request beyond the
+two POSTs, no console error, no overflow at 390 and 1280. Last run
+2026-09-21: 80 checks, all green. Run it after ANY change to
 `board/index.html`. A live smoke test against the deployed relay
 (share-create, share-uplink with an ended snapshot, share-end, the
 page on a local static server) is still worth one run before a
