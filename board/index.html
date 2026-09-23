@@ -14,9 +14,11 @@
      A SHARE IS A MATCH (feedback round 14, decision 6, reversing round 7
      decision 12): a code covers one match. The host's final uplink is the
      ended snapshot, which this page renders as the result (winner tag, no
-     serve dot, the status worded as a result), and share-end deletes the
-     row right after it, so the 404 that follows from share-state is the
-     end of the follow. A 404 without an ended snapshot means the host
+     serve dot, the status worded as a result) and treats as TERMINAL: the
+     poll stops there, as on the phone and the watch (feedback round 24:
+     the relay now keeps a scored end for 24 hours so players can save it,
+     so share-state keeps answering and no 404 would ever end the follow).
+     A 404 without an ended snapshot means the host
      stopped sharing mid-match (or the share idled out): the last score
      stays with "sharing ended". Nothing rolls over to a next match under
      the same code; the next match has a new code.
@@ -684,6 +686,12 @@
       failures = 0;
       lastOk = Date.now();
       applyShare(res.data);
+      // The ended snapshot is terminal (round 24: the kept row keeps
+      // answering, so waiting for a 404 would poll for a day).
+      if (matchOver) {
+        markShareEnded();
+        return;
+      }
       schedule(POLL_MS);
     }, function () {
       inFlight = false;
@@ -720,6 +728,10 @@
       renderTeam();
       applyShare(res.data);
       setInterval(setStatus, 1000);
+      if (matchOver) {
+        markShareEnded();
+        return;
+      }
       schedule(POLL_MS);
     }, function () {
       showForm("Could not reach the score service. Try again");

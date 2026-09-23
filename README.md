@@ -93,9 +93,10 @@ decision 12), so the page is one match long:
 
 - the host's final uplink is the ENDED snapshot, rendered as the
   result: the winner tag on the winning tile, no serve dot, the
-  status and the banner worded as a result. share-end deletes the row
-  right after it, so the 404 that follows from `share-state` is the
-  end of the follow: polling stops, the result stays on screen;
+  status and the banner worded as a result. It is TERMINAL: polling
+  stops there and the result stays on screen (feedback round 24: the
+  relay keeps a scored end for 24 hours so players can save it, so
+  `share-state` goes on answering and no 404 follows for a day);
 - a 404 WITHOUT an ended snapshot (the host stopped sharing
   mid-match, or the share idled past the relay's 2 h TTL) keeps the
   last score with "sharing ended" and one explaining line;
