@@ -64,10 +64,13 @@ Later content pushes work with the headless git recipe.
   Remove the tag on every page at release.
 - NO external requests: system font stack, no Google Fonts, no CDN, no
   analytics, no remote images. The only network calls on the whole
-  site are the board's two edge-function POSTs to the Supabase project
-  (`share-join`, `share-state`). The board stores TWO viewer
-  preferences in localStorage (Your team, per share, and Swap sides,
-  per browser; decision 7) and nothing about any match.
+  site are the board's, all to the ONE Supabase project that is the
+  relay: its two edge-function POSTs (`share-join`, `share-state`)
+  and, since feedback round 27, one WebSocket to the project's Realtime
+  endpoint (the channel the iPhone follow screen uses). The board
+  stores ONE viewer preference in localStorage (Swap sides, per
+  browser) and nothing about any match; the round 14 side choice is
+  gone from the link and its key is removed on load.
   Verify with
   `grep -rn "http[s]*://" site/` before every push: the supabase.co
   calls in `board/index.html` and `mailto:` links are the only hits
@@ -81,12 +84,29 @@ Later content pushes work with the headless git recipe.
 ## The board
 
 `board/index.html` is self-contained. It joins through `share-join`
-(POST `{code}`), then polls `share-state` (POST `{shareId}`) every
-2.5 s with one request in flight, backs off to 10 s after three
-consecutive failures, pauses while the tab is hidden and resumes on
-`visibilitychange`. The dot turns amber after 20 s without a
-successful poll. No `?code=` shows the entry form, which submits to
-`board/?code=` so the URL shape the app shares stays stable.
+(POST `{code}`), then (feedback round 27) LISTENS: it joins the relay's
+Realtime channel `share:<shareId>` over one WebSocket (Phoenix protocol
+v1, the anon key, a heartbeat every 25 s, reconnecting after 1, 2, 5
+and 10 s), so a score lands about 0.36 s after the host's upload
+(`node tools/board-latency.mjs` measures it end to end on the live
+relay; the 2.5 s poller before it took 1.3 to 1.8 s). While the channel
+is joined, `share-state` (POST `{shareId}`) is asked every 10 s as the
+safety net; whenever it is not (before it joins, after it drops, a
+browser without WebSocket) the page asks every 2.5 s with one request
+in flight, backs off to 10 s after three consecutive failures, pauses
+while the tab is hidden and resumes on `visibilitychange`. The dot
+turns amber after 20 s without a fresh answer. No `?code=` shows the
+entry form, which submits to `board/?code=` so the URL shape the app
+shares stays stable. An X in the header leaves the match for the entry
+form. The page speaks English or German by the browser's language
+(`?lang=de|en` forces one). THE LINK IS NEUTRAL (round 27): no side
+choice, the result reads "<names> won"; Swap sides stays. It draws the
+app's Board: tinted tiles in initials, the optic serve ball placed from
+the viewer's side with the serving player's name (the host uploads
+`serverName` inside the snapshot, never an index: the name lists are
+compacted), the full names in a 1 v 1 only on the host's `singles:
+true`, the sets ALWAYS below the tiles, a saved sport by its own name
+(`sportName` inside the snapshot).
 
 A SHARE IS A MATCH (feedback round 14, decision 6, reversing round 7
 decision 12), so the page is one match long:
@@ -173,17 +193,19 @@ styles, which `--dump-dom` cannot.
 The harness covers the LANDING. `node scripts/verify-board.mjs`
 covers the BOARD: the same headless Edge, with the DevTools Fetch
 domain answering the page's two edge-function POSTs from a scripted
-relay, so every state is reached deterministically and read back out
-of the DOM: the live score, the ended snapshot as the result, the 404
-as the end (polling stops), the mid-match stop, Your team (default,
-marking, wording, persistence across a reload of the SAME share,
-Neutral on another share and for a pre-keying value, colours
-unchanged), Swap sides (off by default; on, the drawn order of tiles
-and chooser flips while colours, serve dot, labels and DOM order stay;
-stored per browser and applied on another share), the names on tiles
-and chooser, the entry form's three answers, no request beyond the
-two POSTs, no console error, no overflow at 390 and 1280. Last run
-2026-09-21: 80 checks, all green. Run it after ANY change to
+relay and a scripted WebSocket standing in for the Realtime channel,
+so every state is reached deterministically and read back out of the
+DOM: the channel join and a pushed score with no ask, the 10 s safety
+net and the 2.5 s fallback without WebSocket, the serve ball per team
+and court side with the serving name, colliding initials, the neutral
+result, Swap sides, a saved sport by name, a best of nine below the
+tiles at 390, 844 and 1280, the ended snapshot as the result (the
+channel closes, asking stops), the mid-match stop, a discarded end,
+German, the entry form's answers and the X back to it, no request
+beyond the relay, no console error, no overflow, and (second pass and
+review) the X top right, 1 v 1 full names on the host's word, the
+wide sizes, a server name not in the lists showing nothing, landscape
+fits. Last run 2026-09-25: 188 checks, all green. Run it after ANY change to
 `board/index.html`. A live smoke test against the deployed relay
 (share-create, share-uplink with an ended snapshot, share-end, the
 page on a local static server) is still worth one run before a

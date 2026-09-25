@@ -1,446 +1,624 @@
 <!DOCTYPE html>
-<!-- Rally live scoreboard (static, GitHub Pages).
+<!-- Rally live scoreboard (static, GitHub Pages). THE LINK a host shares.
      Followers are free and account-less by product law: this page needs no
-     login, loads NO external script or style, and stores nothing about the
-     match. It joins a share through the share-join edge function (POST
-     {code}) and then polls share-state (POST {shareId}) over plain fetch:
-     every 2.5 s, one request in flight at a time, backing off to 10 s
-     after three consecutive failures, pausing while the tab is hidden and
-     resuming on visibilitychange.
-     Request and response shapes: supabase/functions/share-join/index.ts and
-     supabase/functions/share-state/index.ts. share-state carries no per-IP
-     rate limit by design (a club's Wi-Fi is one address); share-join keeps
-     its 30 per 10 minutes against code guessing.
-     A SHARE IS A MATCH (feedback round 14, decision 6, reversing round 7
-     decision 12): a code covers one match. The host's final uplink is the
-     ended snapshot, which this page renders as the result (winner tag, no
-     serve dot, the status worded as a result) and treats as TERMINAL: the
-     poll stops there, as on the phone and the watch (feedback round 24:
-     the relay now keeps a scored end for 24 hours so players can save it,
-     so share-state keeps answering and no 404 would ever end the follow).
-     A 404 without an ended snapshot means the host
-     stopped sharing mid-match (or the share idled out): the last score
-     stays with "sharing ended". Nothing rolls over to a next match under
-     the same code; the next match has a new code.
-     YOUR TEAM (decision 7): Team A, Team B or Neutral, default Neutral.
-     Picking a side marks that tile as yours and words the result from your
-     side ("you won"); the colours NEVER change: blue is the host's team and
-     clay the other on every Rally screen, so "which colour are we" has one
-     answer. The choice belongs to ONE SHARE (round 14 verify): it is
-     remembered in localStorage together with the share id it was made
-     for, so the same code on a reload keeps it and any other share
-     starts Neutral again, the way the app's follow screens do. A side
-     in a match last week says nothing about who you are in this one.
-     SWAP SIDES (decision 7): a per-device VIEW setting, the same one the
-     Board and the watch have. It swaps which team is drawn left and right
-     on this browser, for every share; the colours stay with their teams,
-     the serve dot follows its team, the names follow their tiles, and
-     the round-1 default (the host's team left) is what everyone who never
-     touches it keeps. Remembered in localStorage per browser.
-     Those two viewer preferences are ALL this page stores; never anything
-     about the match.
-     Participants' NAMES travel with a share (round 7, decision 10): the
-     tiles read "Denis & Eric" instead of Team A, shortened to the shortest
-     unambiguous form within the match (decision 11). Ids never reach this
-     page.
+     login, loads NO external script, style or font, and stores nothing
+     about the match. It joins a share through the share-join edge function
+     (POST {code}) and then follows it two ways at once:
+       LIVE (feedback round 27, decision 6): it joins the relay's Realtime
+       channel "share:<shareId>" over one WebSocket to the same Supabase
+       project (the channel the iPhone follow screen uses), so a score
+       lands about 0.35 s after the host's upload. While the channel is
+       joined, share-state is asked only every 10 s as a safety net.
+       ASKING: share-state (POST {shareId}) every 2.5 s whenever the live
+       channel is not joined (before it joins, after it drops, in a
+       browser without WebSocket), backing off to 10 s after three
+       consecutive failures, pausing while the tab is hidden and resuming
+       with an immediate ask on visibilitychange.
+     Measured on the live relay (tools/relay-latency.mjs, round 27): the
+     2.5 s poller saw a score 1.8 s after the upload on average, 3.1 s at
+     worst; the Realtime push arrives in about 0.35 s.
+     Request and response shapes: supabase/functions/share-join/index.ts,
+     share-state/index.ts; the broadcasts (events "snapshot", "participants",
+     "ended") come from share-uplink and share-end. share-state carries no
+     per-IP rate limit by design (a club's Wi-Fi is one address); share-join
+     keeps its 30 per 10 minutes against code guessing.
+     A SHARE IS A MATCH (round 14): the ended snapshot is the result and
+     TERMINAL (the poll and the channel stop there; round 24 keeps a scored
+     end on the relay for 24 hours, so no 404 would ever end the follow).
+     A 404 without an ended snapshot means the host stopped sharing mid-match
+     or the share idled out: the last score stays with "Sharing ended".
+     THE LINK IS NEUTRAL (round 27, decision 2): no side choice here; the
+     result reads "<side> won". SWAP SIDES stays: a per-device VIEW
+     setting, remembered in localStorage per browser (rally.board.swap);
+     the colours, the serve ball and the names stay with their teams. That
+     one preference is ALL this page stores; the old side choice
+     (rally.board.team) is removed on load.
+     THE BOARD IS THE APP'S BOARD (round 27, decision 4): two tinted tiles
+     (blue = the host's team, clay = the other, STYLE_GUIDE, load-bearing),
+     the side label above the points in INITIALS ("D & J", collisions
+     expand, src/players.ts tileLabelsFromNames), the sets as the stacked
+     mini-table ALWAYS below the tiles (it scrolls sideways when a best of
+     nine outgrows the screen, the newest set in view), the serve as the
+     optic ball placed from the viewer's side (src/components/Scoreboard.tsx
+     ballJustify: the host's team serves from the NEAR edge on its serve
+     court side, the other team from the FAR edge with the sides mirrored,
+     centered where the sport has no serve court side) with the serving
+     player's NAME beside it when the host's snapshot says which player
+     serves (snapshot.serverIndex, round 27, decision 1). A decided match
+     shows sets won in the tiles, as the app does. Light and dark follow
+     the system.
+     THE SPORT READS AS A NAME (decision 3): built-in ids map to their
+     names, a saved sport arrives by name (snapshot.sportName). The page
+     speaks English or German by the browser's language; ?lang=de|en
+     overrides it (the verifier uses that).
+     AN X LEAVES (decision 5): back to the code entry, nothing kept.
      The anon key is public by design: it grants nothing, the table is
      service-role-only and every mutation goes through edge functions.
-     The rendering is the scoreboard the app's Board and follow screen use:
-     blue left = the host's side, clay right = the other side, sets table,
-     serve dot, stale dot amber after 20 s without a successful poll.
      The app links here through boardUrl() in src/links.ts; the URL shape is
      board/?code=123456 and must stay stable.
      Verified by scripts/verify-board.mjs (headless Edge, the two POSTs
-     answered by a scripted relay). -->
+     answered by a scripted relay, the WebSocket by a scripted channel). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>Rally live score</title>
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <style>
+  /* The app's tokens (STYLE_GUIDE colour table, src/theme.ts). */
   :root {
-    --ground: #0B1622;
-    --panel: #101E2E;
-    --line: #1C2C3E;
-    --text: #E8EEF5;
-    --muted: #7C8CA0;
-    --us: #5B96E8;
-    --them: #E08350;
-    --live: #4C9E6B;
-    --stale: #E0A830;
+    --ground: #F4F7F9;
+    --surface: #FFFFFF;
+    --ink: #16232E;
+    --ink-soft: #45586A;
+    --ink-faint: #5A6E80;
+    --line: #D5DEE6;
+    --us: #1A66C7;
+    --them: #C75A28;
+    --them-ink: #B04A20;
+    --us-tile: rgba(26, 102, 199, 0.13);
+    --them-tile: rgba(199, 90, 40, 0.13);
+    --serve: #B7C821;
+    --serve-ink: #16232E;
+    --fresh: #2E8B5A;
+    --stale: #B8860B;
+    --on-accent: #FFFFFF;
+    --track: #E4EBF1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0B1622;
+      --surface: #101E2D;
+      --ink: #E7EEF4;
+      --ink-soft: #A7B8C7;
+      --ink-faint: #74879A;
+      --line: #22374B;
+      --us: #5B96E8;
+      --them: #E08350;
+      --them-ink: #E08350;
+      --us-tile: rgba(91, 150, 232, 0.22);
+      --them-tile: rgba(224, 131, 80, 0.22);
+      --serve: #D9E44A;
+      --serve-ink: #16232E;
+      --fresh: #4EA97C;
+      --stale: #D9A13B;
+      /* Round 27 review: white on the dark-mode blue is 3.0:1; the
+         ground's ink reads 6.8:1. */
+      --on-accent: #0B1622;
+      --track: #16283A;
+    }
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
     margin: 0;
     background: var(--ground);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Helvetica, Arial, sans-serif;
-    min-height: 100vh;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+      Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; }
+
+  /* Header: the X (left), the sport (center), the connection (right). */
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 1004px;
+    margin: 0 auto;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px));
+  }
+  #leave {
+    justify-self: end;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 22px; padding: 0;
+    background: transparent; color: var(--ink-soft);
+    cursor: pointer; visibility: hidden;
+  }
+  #leave svg { width: 22px; height: 22px; display: block; }
+  #leave:hover { background: var(--track); color: var(--ink); }
+  #leave:active { opacity: 0.7; }
+  body.following #leave { visibility: visible; }
+  #sport {
+    font-size: 17px; font-weight: 600; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 52vw; text-align: center;
+  }
+  #status {
+    justify-self: start;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; color: var(--ink-faint);
+    visibility: hidden; white-space: nowrap;
+  }
+  body.following #status { visibility: visible; }
+  #dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
+    background: var(--fresh); }
+  #dot.stale { background: var(--stale); }
+  #dot.off { background: var(--ink-faint); }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
     display: flex;
     flex-direction: column;
   }
-  header {
-    display: flex;
+
+  /* --- The code entry ------------------------------------------------ */
+  #joinForm {
+    display: none;
+    flex: 1;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--line);
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    padding-bottom: 8vh;
   }
-  #sport { font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: lowercase; overflow: hidden; text-overflow: ellipsis;
-    white-space: nowrap; }
-  #status { display: flex; align-items: center; gap: 8px; font-size: 13px;
-    color: var(--muted); flex: none; }
-  #dot { width: 10px; height: 10px; border-radius: 50%; flex: none;
-    background: var(--live); }
-  #dot.stale { background: var(--stale); }
-  #dot.off { background: var(--muted); }
-  main { flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; padding: 24px 16px;
-    gap: 28px; }
-  #banner { display: none; flex-direction: column; align-items: center;
-    gap: 8px; }
-  #banner.show { display: flex; }
-  #bannerTitle { font-size: 15px; color: var(--muted);
-    letter-spacing: 0.06em; text-transform: uppercase; }
-  #bannerHint { font-size: 14px; color: var(--muted); text-align: center;
-    max-width: 30em; }
-  #bannerHint:empty { display: none; }
-  #score { display: flex; align-items: center; justify-content: center;
-    flex-wrap: wrap; gap: 20px 6vw; max-width: 100%; }
-  .side { display: flex; flex-direction: column; align-items: center;
-    gap: 10px; min-width: 128px; max-width: 46vw; }
-  /* Phones: the sets table drops under the two sides instead of pushing
-     them past the edge (five sets beside 64 px points do not fit in
-     360 px). The ::after item is the line break; the table takes the
-     next row, centered. */
-  @media (max-width: 480px) {
-    .side { min-width: 96px; }
-    #score::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
-    #setsTable { order: 3; }
-  }
-  /* The side label above the points: the participants' names when the
-     share carries them (decision 10), else Team A / Team B. Same idiom
-     as the app's tiles (13 pt, uppercase, ink-soft). */
-  .side-name { display: flex; align-items: center; justify-content: center;
-    gap: 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--muted); max-width: 100%;
-    text-align: center; }
-  .side-name .label { overflow: hidden; text-overflow: ellipsis;
-    white-space: nowrap; }
-  /* "you": the follower's own side (decision 7). A small pill next to
-     the name; the tile's colour is its team's and does not move. */
-  .side-name .you { display: none; font-size: 10px; letter-spacing: 0.08em;
-    padding: 2px 6px; border-radius: 999px; border: 1px solid var(--text);
-    color: var(--text); flex: none; }
-  .side.mine .side-name .you { display: inline-block; }
-  .side.mine .side-name { color: var(--text); }
-  .points { font-size: clamp(64px, 18vw, 148px); font-weight: 700;
-    line-height: 1; font-variant-numeric: tabular-nums; }
-  .side.a .points { color: var(--us); }
-  .side.b .points { color: var(--them); }
-  .sets-won { font-size: 15px; color: var(--muted); }
-  .sets-won b { color: var(--text); font-size: 17px; }
-  .serve { width: 12px; height: 12px; border-radius: 50%;
-    visibility: hidden; }
-  .side.a .serve { background: var(--us); }
-  .side.b .serve { background: var(--them); }
-  .side.serving .serve { visibility: visible; }
-  .winner-tag { font-size: 12px; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--muted); visibility: hidden; }
-  .side.won .winner-tag { visibility: visible; color: var(--text); }
-  #setsTable { border-collapse: collapse; }
-  #setsTable td { padding: 4px 12px; text-align: center; font-size: 20px;
-    font-variant-numeric: tabular-nums; border: 0; }
-  #setsTable tr.a td { color: var(--us); }
-  #setsTable tr.b td { color: var(--them); }
-  #setsTable td sup { font-size: 11px; color: var(--muted); margin-left: 2px; }
-  /* Swap sides (decision 7): the two tiles change places, and so do the
-     two team buttons of the chooser, so a button always sits under its
-     tile. Pure order: every tile keeps its class, its colour, its serve
-     dot and its label. On a phone the sets table still drops beneath
-     (order 2 and 3 above outrank -1 and 1). */
-  #board.swapped #sideA { order: 1; }
-  #board.swapped #sideB { order: -1; }
-  #board.swapped #teamChoices button[data-team="A"] { order: 1; }
-  #board.swapped #teamChoices button[data-team="B"] { order: -1; }
-  /* Your team (decision 7): a segmented control, Team A left and Team B
-     right like the tiles, Neutral between them. Neutral-styled on
-     purpose: the team colours belong to the tiles. The separators are
-     the 1 px gaps over the group's line-coloured background, so they
-     hold whichever order the buttons are drawn in. */
-  #team { display: flex; flex-direction: column; align-items: center;
-    gap: 8px; max-width: 100%; }
-  #teamLabel { font-size: 12px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--muted); }
-  #teamRow { display: flex; align-items: center; gap: 10px;
-    max-width: 100%; }
-  #teamChoices { display: flex; gap: 1px; background: var(--line);
-    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
-    flex: 0 1 auto; min-width: 0; }
-  #teamChoices button { background: var(--panel); color: var(--muted);
-    border: 0; font-size: 14px; font-weight: 600; padding: 10px 16px;
-    cursor: pointer; flex: 0 1 auto; min-width: 0; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap; }
-  #teamChoices button:hover { color: var(--text); }
-  #teamChoices button:active { background: var(--line); }
-  #teamChoices button[aria-pressed="true"] { background: var(--line);
-    color: var(--text); }
-  /* The swap toggle beside the chooser: an icon button in the same
-     idiom as the Board's (a round toggle next to Personal/Neutral); on,
-     the arrows take court blue. */
-  #swap { display: flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; flex: none; background: var(--panel);
-    color: var(--muted); border: 1px solid var(--line); border-radius: 10px;
-    cursor: pointer; padding: 0; }
-  #swap svg { width: 20px; height: 20px; display: block; }
-  #swap:hover { color: var(--text); }
-  #swap:active { background: var(--line); }
-  #swap[aria-pressed="true"] { background: var(--line); color: var(--us);
-    border-color: var(--us); }
-  #codeLabel { font-size: 13px; color: var(--muted);
-    letter-spacing: 0.14em; }
-  #joinForm { display: none; flex-direction: column; align-items: center;
-    gap: 16px; }
   #joinForm.show { display: flex; }
-  #joinForm p { margin: 0; color: var(--muted); font-size: 15px; }
-  #joinForm input { background: var(--panel); border: 1px solid var(--line);
-    color: var(--text); font-size: 28px; letter-spacing: 0.3em;
-    text-align: center; width: 220px; padding: 12px 8px; border-radius: 10px;
-    font-variant-numeric: tabular-nums; }
-  #joinForm input:focus { outline: none; border-color: var(--us); }
-  #joinForm button { background: var(--us); color: #08111C; border: 0;
-    font-size: 16px; font-weight: 600; padding: 12px 32px;
-    border-radius: 10px; cursor: pointer; }
-  #joinForm button:hover { filter: brightness(1.08); }
-  #joinForm button:active { filter: brightness(0.92); }
-  #joinError { color: var(--them); font-size: 14px; min-height: 18px;
-    margin: 0; }
-  #board { display: none; flex-direction: column; align-items: center;
-    gap: 28px; width: 100%; }
+  .mark { display: flex; gap: 5px; margin-bottom: 6px; }
+  .mark span { width: 18px; height: 34px; border-radius: 7px; background: var(--us); }
+  .mark span + span { background: var(--them); }
+  #joinForm h1 { margin: 0; font-size: 28px; line-height: 34px; font-weight: 700;
+    letter-spacing: -0.02em; }
+  #joinHint { margin: 0; color: var(--ink-soft); font-size: 16px; max-width: 26em; }
+  #codeInput {
+    margin-top: 10px;
+    width: min(280px, 100%);
+    background: var(--surface); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 16px;
+    font-size: 32px; font-weight: 600; letter-spacing: 0.32em;
+    text-indent: 0.32em; text-align: center;
+    padding: 14px 8px; font-variant-numeric: tabular-nums;
+  }
+  #codeInput::placeholder { color: var(--line); }
+  #codeInput:focus { outline: none; border-color: var(--us); }
+  #joinButton {
+    width: min(280px, 100%); min-height: 52px;
+    border: 0; border-radius: 26px;
+    background: var(--us); color: var(--on-accent);
+    font-size: 17px; font-weight: 600; cursor: pointer;
+  }
+  #joinButton:hover { filter: brightness(1.06); }
+  #joinButton:active { opacity: 0.75; }
+  #joinError { margin: 0; min-height: 20px; color: var(--them-ink); font-size: 15px; }
+
+  /* --- The board ----------------------------------------------------- */
+  /* The block centers in the height it has once the tiles reach their
+     ceiling (the app Board's rule), so a tall phone has no dead band. */
+  #board { display: none; flex: 1; flex-direction: column; justify-content: center; gap: 18px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   #board.show { display: flex; }
+
+  /* The result or the end, above the tiles. */
+  #banner { display: none; flex-direction: column; align-items: center;
+    gap: 4px; text-align: center; padding: 4px 8px 0; }
+  #banner.show { display: flex; }
+  #bannerTitle { font-size: 22px; line-height: 28px; font-weight: 700; }
+  #bannerHint { font-size: 15px; color: var(--ink-soft); max-width: 32em; }
+  #bannerHint:empty { display: none; }
+
+  #tiles { display: flex; gap: 12px; flex: 1;
+    min-height: 220px; max-height: 460px; }
+  #board.swapped #tiles { flex-direction: row-reverse; }
+  .tile {
+    position: relative;
+    flex: 1 1 0; min-width: 0;
+    border-radius: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    padding: 44px 12px;
+    overflow: hidden;
+  }
+  .tile.a { background: var(--us-tile); }
+  .tile.b { background: var(--them-tile); }
+  .who { max-width: 100%; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .points { font-size: clamp(80px, 24vw, 188px); line-height: 1.08;
+    font-weight: 800; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tile.a .points { color: var(--us); }
+  .tile.b .points { color: var(--them); }
+  /* The ball lane: the near (bottom) edge for the host's team, the far
+     (top) edge for the other; justify-content comes from ballJustify(). */
+  .lane { position: absolute; left: 14px; right: 14px;
+    display: none; align-items: center; gap: 7px; }
+  .tile.serving .lane { display: flex; }
+  .tile.a .lane { bottom: 14px; }
+  .tile.b .lane { top: 14px; }
+  .ball { width: 20px; height: 20px; border-radius: 50%; flex: none;
+    background: var(--serve); color: var(--serve-ink);
+    font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; }
+  /* A long name wraps to a second line on a narrow tile instead of
+     cutting "serves" short. */
+  .serve-name { min-width: 0; font-size: 13px; line-height: 16px; font-weight: 600;
+    color: var(--ink-soft); overflow: hidden; display: -webkit-box;
+    -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+  .serve-name:empty { display: none; }
+
+  /* The sets: the stacked mini-table, always below the tiles. It
+     scrolls sideways inside its own box when it outgrows the width. */
+  /* Auto margins center the row while it fits and let it scroll from
+     its first set when it does not (justify-content: center would clip
+     the start of an overflowing row out of reach). */
+  #sets { display: flex; overflow-x: auto;
+    scrollbar-width: none; min-height: 56px; }
+  #sets::-webkit-scrollbar { display: none; }
+  #setRow { display: flex; gap: 22px; margin: 0 auto; padding: 0 4px; }
+  #setRow.dense { gap: 14px; }
+  #setRow.denser { gap: 10px; }
+  .set { display: flex; flex-direction: column; align-items: center;
+    gap: 2px; min-width: 26px; }
+  .set b { font-size: 24px; line-height: 28px; font-weight: 700;
+    font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+  .set b.live { color: var(--ink); }
+  .set b.won-a { color: var(--us); }
+  .set b.won-b { color: var(--them); }
+  .set small { font-size: 12px; font-weight: 600; margin-left: 2px; }
+
+  /* The controls: swap sides, and the code. */
+  #controls { display: flex; align-items: center; justify-content: center;
+    gap: 14px; flex-wrap: wrap; }
+  #swap { display: flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 0 18px;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 22px;
+    font-size: 15px; font-weight: 600; cursor: pointer; }
+  #swap svg { width: 18px; height: 18px; display: block; color: var(--ink-soft); }
+  #swap:hover { border-color: var(--ink-faint); }
+  #swap:active { opacity: 0.75; }
+  #swap[aria-pressed="true"] { border-color: var(--us); }
+  #swap[aria-pressed="true"] svg { color: var(--us); }
+  #codeLabel { font-size: 14px; color: var(--ink-faint);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+  footer { text-align: center; padding: 6px 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+  footer a { color: var(--ink-faint); font-size: 13px; text-decoration: none; }
+  footer a:hover { color: var(--ink-soft); text-decoration: underline; }
+
+  /* Wide screens (a laptop, a TV courtside; feedback round 27, second
+     pass): the current score stays the focus, and everything around it
+     grows WITH the screen instead of staying phone-sized, so the page
+     reads in balance from 900 px to a 4K TV. Every size is a clamp on
+     the viewport, capped where more would only shout. */
+  @media (min-width: 900px) {
+    header { max-width: min(1500px, 92vw); padding-left: 20px; padding-right: 20px; }
+    main { max-width: min(1476px, 90vw); }
+    #sport { font-size: clamp(18px, 1.1vw + 8px, 34px); }
+    #status { font-size: clamp(14px, 0.7vw + 8px, 26px); gap: clamp(8px, 0.5vw, 12px); }
+    #dot { width: clamp(9px, 0.6vw, 14px); height: clamp(9px, 0.6vw, 14px); }
+    #leave { width: clamp(44px, 2.8vw + 8px, 64px); height: clamp(44px, 2.8vw + 8px, 64px); border-radius: 50%; }
+    #leave svg { width: clamp(22px, 1.4vw + 4px, 32px); height: clamp(22px, 1.4vw + 4px, 32px); }
+    #board { gap: clamp(18px, 1.6vw, 34px); }
+    #banner { gap: clamp(4px, 0.4vw, 8px); }
+    #bannerTitle { font-size: clamp(22px, 1.8vw + 8px, 52px); line-height: 1.25; }
+    #bannerHint { font-size: clamp(15px, 0.6vw + 8px, 22px); }
+    #tiles { gap: clamp(20px, 1.6vw, 36px); min-height: 340px; max-height: min(62vh, 760px); }
+    .tile { border-radius: clamp(32px, 2vw, 48px); padding: clamp(44px, 4vw, 84px) 16px; }
+    .who { font-size: clamp(15px, 1vw + 6px, 32px); }
+    .points { font-size: clamp(120px, min(15vw, 30vh), 320px); }
+    .lane { left: clamp(20px, 1.6vw, 34px); right: clamp(20px, 1.6vw, 34px); gap: clamp(9px, 0.7vw, 14px); }
+    .tile.a .lane { bottom: clamp(20px, 1.6vw, 34px); }
+    .tile.b .lane { top: clamp(20px, 1.6vw, 34px); }
+    .ball { width: clamp(28px, 1.8vw + 10px, 56px); height: clamp(28px, 1.8vw + 10px, 56px);
+      line-height: clamp(28px, 1.8vw + 10px, 56px); font-size: clamp(14px, 0.8vw + 5px, 26px); }
+    .serve-name { font-size: clamp(16px, 0.9vw + 7px, 30px); line-height: 1.25; }
+    #sets { min-height: clamp(56px, 4.5vw, 110px); }
+    #setRow { gap: clamp(22px, 1.8vw, 40px); }
+    #setRow.dense { gap: clamp(14px, 1.2vw, 28px); }
+    #setRow.denser { gap: clamp(10px, 0.9vw, 22px); }
+    .set b { font-size: clamp(28px, 2vw + 8px, 60px); line-height: 1.15; }
+    .set small { font-size: clamp(12px, 0.5vw + 6px, 20px); }
+    #controls { gap: clamp(14px, 1vw, 24px); }
+    #swap { min-height: clamp(44px, 2.6vw + 14px, 72px); padding: 0 clamp(18px, 1.4vw, 32px);
+      border-radius: 999px; font-size: clamp(15px, 0.7vw + 8px, 26px); gap: clamp(8px, 0.6vw, 14px); }
+    #swap svg { width: clamp(18px, 1vw + 6px, 32px); height: clamp(18px, 1vw + 6px, 32px); }
+    #codeLabel { font-size: clamp(14px, 0.7vw + 8px, 26px); }
+    footer a { font-size: clamp(13px, 0.4vw + 8px, 18px); }
+  }
+  /* Short landscape phones: everything fits one screen; the tiles give
+     up height first and the footer steps aside. */
+  @media (max-height: 460px) {
+    header { padding-top: calc(4px + env(safe-area-inset-top, 0px)); padding-bottom: 2px; }
+    main { padding-top: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+    #board { gap: 8px; }
+    #banner { padding-top: 0; }
+    #bannerTitle { font-size: 18px; line-height: 22px; }
+    #bannerHint { font-size: 13px; }
+    #tiles { min-height: 0; }
+    /* Round 27 review: the lane (10 px in, a 20 px ball) sits inside the
+       tile's own padding, so it never covers the side label or the score;
+       the score follows the height as well as the width. */
+    .tile { padding: 36px 12px; }
+    .tile.a .lane { bottom: 8px; }
+    .tile.b .lane { top: 8px; }
+    .lane { left: 12px; right: 12px; }
+    .points { font-size: clamp(44px, min(13vw, 19vh), 120px); }
+    #sets { min-height: 44px; }
+    .set b { font-size: 20px; line-height: 23px; }
+    #swap { min-height: 40px; }
+    footer { display: none; }
+  }
 </style>
 </head>
 <body>
 <header>
-  <div id="sport">rally</div>
-  <div id="status"><span id="statusText">live</span><span id="dot"></span></div>
+  <div id="status"><span id="dot"></span><span id="statusText"></span></div>
+  <div id="sport">Rally</div>
+  <button type="button" id="leave" aria-label="Leave match" title="Leave match">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
 </header>
 <main>
-  <form id="joinForm">
-    <p>Enter the 6-digit code to watch a live match</p>
+  <form id="joinForm" novalidate>
+    <div class="mark" aria-hidden="true"><span></span><span></span></div>
+    <h1 id="joinTitle">Follow a live match</h1>
+    <p id="joinHint">Enter the 6-digit code from the host.</p>
     <input id="codeInput" inputmode="numeric" autocomplete="one-time-code"
-      maxlength="6" placeholder="000000" aria-label="join code">
-    <p id="joinError"></p>
-    <button type="submit">Watch</button>
+      maxlength="6" placeholder="000000" aria-label="Code">
+    <button type="submit" id="joinButton">Follow</button>
+    <p id="joinError" role="alert"></p>
   </form>
+  <div id="announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <section id="board">
     <div id="banner">
-      <div id="bannerTitle">sharing ended</div>
+      <div id="bannerTitle"></div>
       <div id="bannerHint"></div>
     </div>
-    <div id="score">
-      <div class="side a" id="sideA">
-        <div class="side-name" id="nameA"><span class="label">Team A</span><span class="you">you</span></div>
-        <span class="winner-tag">winner</span>
+    <div id="tiles">
+      <div class="tile a" id="tileA">
+        <div class="who" id="nameA">Team A</div>
         <div class="points" id="pointsA">0</div>
-        <span class="serve"></span>
-        <div class="sets-won">sets <b id="setsA">0</b></div>
+        <div class="lane" id="laneA"><span class="ball" id="ballA"></span><span class="serve-name" id="serveA"></span></div>
       </div>
-      <table id="setsTable" aria-label="games by set">
-        <tr class="a" id="rowA"></tr>
-        <tr class="b" id="rowB"></tr>
-      </table>
-      <div class="side b" id="sideB">
-        <div class="side-name" id="nameB"><span class="label">Team B</span><span class="you">you</span></div>
-        <span class="winner-tag">winner</span>
+      <div class="tile b" id="tileB">
+        <div class="who" id="nameB">Team B</div>
         <div class="points" id="pointsB">0</div>
-        <span class="serve"></span>
-        <div class="sets-won">sets <b id="setsB">0</b></div>
+        <div class="lane" id="laneB"><span class="ball" id="ballB"></span><span class="serve-name" id="serveB"></span></div>
       </div>
     </div>
-    <div id="team">
-      <div id="teamLabel">Your team</div>
-      <div id="teamRow">
-        <div id="teamChoices" role="group" aria-label="Your team">
-          <button type="button" data-team="A" aria-pressed="false">Team A</button>
-          <button type="button" data-team="N" aria-pressed="true">Neutral</button>
-          <button type="button" data-team="B" aria-pressed="false">Team B</button>
-        </div>
-        <button type="button" id="swap" aria-pressed="false" aria-label="Swap sides" title="Swap sides">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <path d="M4 8h14"/><path d="M14 4l4 4-4 4"/>
-            <path d="M20 16H6"/><path d="M10 12l-4 4 4 4"/>
-          </svg>
-        </button>
-      </div>
+    <div id="sets" aria-label="Sets"><div id="setRow"></div></div>
+    <div id="controls">
+      <button type="button" id="swap" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h14"/><path d="M14 4l4 4-4 4"/><path d="M20 16H6"/><path d="M10 12l-4 4 4 4"/></svg>
+        <span id="swapLabel">Swap sides</span>
+      </button>
+      <span id="codeLabel"></span>
     </div>
-    <div id="codeLabel"></div>
   </section>
 </main>
+<footer><a href="../" id="scoredWith">Scored with Rally</a></footer>
 <script>
 (function () {
   var SUPABASE_URL = "https://cdfssiiyuvdxsfgkjdxz.supabase.co";
   var ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkZnNzaWl5dXZkeHNmZ2tqZHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNzM4ODIsImV4cCI6MjEwMzg0OTg4Mn0.ElGhVvNKSUzxaVgHNG6zeia6ozcsC4kx4JD7_DM5FBA";
   var FN = SUPABASE_URL + "/functions/v1";
+  var WS_URL = SUPABASE_URL.replace(/^http/, "ws") +
+    "/realtime/v1/websocket?apikey=" + ANON_KEY + "&vsn=1.0.0";
   var CODE_RE = /^[1-9][0-9]{5}$/;
 
-  var POLL_MS = 2500;            // steady cadence
+  var POLL_MS = 2500;            // asking, while the live channel is not joined
+  var POLL_LIVE_MS = 10000;      // the safety net while it is
   var POLL_SLOW_MS = 10000;      // after SLOW_AFTER consecutive failures
   var SLOW_AFTER = 3;
-  var STALE_MS = 20000;          // amber dot without a successful poll
-  // The two viewer preferences this page stores, and nothing else:
-  // Your team as {"share": <shareId>, "team": "A"|"B"}, valid for that
-  // one share (a reload of the same code keeps it, another share
-  // starts Neutral); Swap sides as "1", per browser, for every share.
-  var TEAM_KEY = "rally.board.team";
+  var STALE_MS = 20000;          // amber dot without a fresh answer
+  var HEARTBEAT_MS = 25000;      // Phoenix heartbeat (the server drops at 60 s)
+  var RECONNECT_MS = [1000, 2000, 5000, 10000];
   var SWAP_KEY = "rally.board.swap";
 
-  // The sport ids the relay carries (src/sportCatalog.ts), lowercased for
-  // the header the same way the app's chips read.
-  var SPORTS = {
-    padel: "padel", tennis: "tennis", pickleball: "pickleball",
-    tabletennis: "table tennis", badminton: "badminton", squash: "squash",
-    volleyball: "volleyball", beachvolleyball: "beach volleyball",
-    racquetball: "racquetball", custom: "custom"
+  // --- Language (decision 3) ------------------------------------------
+  var TEXT = {
+    en: {
+      live: "Live", reconnecting: "Reconnecting", final: "Final", ended: "Ended",
+      teamA: "Team A", teamB: "Team B",
+      won: "{name} won", matchEnded: "Match ended",
+      sharingEnded: "Sharing ended",
+      sharingEndedHint: "The host stopped sharing. This is the last score received.",
+      discardedHint: "The host discarded this match.",
+      serves: "{name} serves", pair: "{a} & {b}",
+      swap: "Swap sides", leave: "Leave match", code: "Code {code}",
+      joinTitle: "Follow a live match", joinHint: "Enter the 6-digit code from the host.",
+      joinButton: "Follow", codeLabel: "Code",
+      errDigits: "The code is 6 digits.",
+      errNotFound: "No live match with that code.",
+      errTooMany: "Too many attempts. Wait a few minutes and try again.",
+      errNetwork: "Could not reach the score service. Try again.",
+      scoredWith: "Scored with Rally", title: "Rally live score", sets: "Sets",
+      sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
+        tabletennis: "Table tennis", badminton: "Badminton", squash: "Squash",
+        volleyball: "Volleyball", beachvolleyball: "Beach volleyball",
+        racquetball: "Racquetball", custom: "Custom" }
+    },
+    de: {
+      live: "Live", reconnecting: "Verbinde neu", final: "Endstand", ended: "Beendet",
+      teamA: "Team A", teamB: "Team B",
+      won: "Sieg für {name}", matchEnded: "Match beendet",
+      sharingEnded: "Teilen beendet",
+      sharingEndedHint: "Der Gastgeber teilt nicht mehr. Das ist der zuletzt empfangene Spielstand.",
+      discardedHint: "Der Gastgeber hat das Match verworfen.",
+      serves: "{name} schlägt auf", pair: "{a} & {b}",
+      swap: "Seiten tauschen", leave: "Match verlassen", code: "Code {code}",
+      joinTitle: "Live-Match verfolgen", joinHint: "Gib den 6-stelligen Code des Gastgebers ein.",
+      joinButton: "Verfolgen", codeLabel: "Code",
+      errDigits: "Der Code hat 6 Ziffern.",
+      errNotFound: "Kein laufendes Match mit diesem Code.",
+      errTooMany: "Zu viele Versuche. Warte ein paar Minuten und versuch es noch einmal.",
+      errNetwork: "Der Spielstand-Dienst ist nicht erreichbar. Versuch es noch einmal.",
+      scoredWith: "Gezählt mit Rally", title: "Rally Live-Spielstand", sets: "Sätze",
+      sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
+        tabletennis: "Tischtennis", badminton: "Badminton", squash: "Squash",
+        volleyball: "Volleyball", beachvolleyball: "Beachvolleyball",
+        racquetball: "Racquetball", custom: "Individuell" }
+    }
   };
+  var params = new URLSearchParams(location.search);
+  var lang = (function () {
+    var forced = params.get("lang");
+    if (forced === "de" || forced === "en") return forced;
+    var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"];
+    for (var i = 0; i < list.length; i++) {
+      var tag = String(list[i] || "").toLowerCase();
+      if (tag.indexOf("de") === 0) return "de";
+      if (tag.indexOf("en") === 0) return "en";
+    }
+    return "en";
+  })();
+  var T = TEXT[lang];
+  function fill(template, values) {
+    return template.replace(/\{(\w+)\}/g, function (_, key) {
+      return values[key] === undefined ? "" : String(values[key]);
+    });
+  }
 
   var el = function (id) { return document.getElementById(id); };
   var shareId = null;
   var curSeq = -1;
   var curSport = "";
+  var sportName = null;          // a saved sport's own name (snapshot.sportName)
   var lastSnapshot = null;
+  var namesPushedAt = 0;         // when the last names push arrived (round 27 review)
+  var endedPending = false;      // an "ended" push met an ask in flight
+  var lastHeartbeatReply = 0;    // the socket answers heartbeats while alive
   var names = null;              // {teamA: [names], teamB: [names]} or null
   var matchOver = false;         // the ended snapshot arrived: the result
   var shareOver = false;         // terminal: the row is gone (404)
-  var lastOk = 0;                // time of the last successful join or poll
+  var lastOk = 0;                // time of the last fresh answer (join, ask or push)
   var joined = false;
   var inFlight = false;
   var failures = 0;
   var timer = null;
-  var team = "N";                // "A" | "B" | "N" (neutral); read per share on join
   var swapped = readSwap();      // per browser: team B drawn left
+  var ws = null;                 // the live channel's socket
+  var liveJoined = false;        // the channel answered phx_join ok
+  var wsRef = 0;
+  var heartbeat = null;
+  var reconnectTimer = null;
+  var reconnects = 0;
+
+  // The side choice of rounds 14-26 is gone from the link (decision 2);
+  // a value left from before is removed, so this page keeps one key.
+  try { localStorage.removeItem("rally.board.team"); } catch (e) { /* blocked storage */ }
+
+  function applyLanguage() {
+    document.documentElement.lang = lang;
+    document.title = T.title;
+    el("joinTitle").textContent = T.joinTitle;
+    el("joinHint").textContent = T.joinHint;
+    el("joinButton").textContent = T.joinButton;
+    el("codeInput").setAttribute("aria-label", T.codeLabel);
+    el("leave").setAttribute("aria-label", T.leave);
+    el("leave").setAttribute("title", T.leave);
+    el("swapLabel").textContent = T.swap;
+    el("sets").setAttribute("aria-label", T.sets);
+    el("scoredWith").textContent = T.scoredWith;
+  }
 
   function showForm(message) {
+    document.body.classList.remove("following");
     el("board").classList.remove("show");
     el("joinForm").classList.add("show");
     el("joinError").textContent = message || "";
-    el("statusText").textContent = "waiting";
-    el("dot").className = "off";
+    el("sport").textContent = "Rally";
   }
 
   el("joinForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    var v = el("codeInput").value.trim();
+    var v = el("codeInput").value.replace(/\s+/g, "");
     if (!CODE_RE.test(v)) {
-      el("joinError").textContent = "The code is 6 digits";
+      el("joinError").textContent = T.errDigits;
       return;
     }
-    // Keeps the folder URL (board/?code=), the shape the app shares.
-    location.search = "?code=" + v;
+    // Keeps the folder URL (board/?code=), the shape the app shares; a
+    // forced language stays with it.
+    var next = "?code=" + v + (params.get("lang") ? "&lang=" + params.get("lang") : "");
+    location.search = next;
   });
 
-  function sportLabel(id) {
-    if (typeof id !== "string" || id.length === 0) return "rally";
-    return SPORTS[id] || id;
+  // The X (decision 5): leave the match, back to the code entry. The
+  // page is reloaded without the code, so no timer, socket or state of
+  // this match survives.
+  el("leave").addEventListener("click", function () {
+    stopLive();
+    clearTimeout(timer);
+    shareOver = true;
+    joined = false;
+    var left = (params.get("code") || "").trim();
+    var keep = params.get("lang") ? "?lang=" + params.get("lang") : "";
+    try { history.replaceState(null, "", location.pathname + keep); } catch (e) { /* file:// in some browsers */ }
+    el("banner").classList.remove("show");
+    el("announce").textContent = "";
+    showForm("");
+    el("codeInput").value = CODE_RE.test(left) ? left : "";
+    try { el("codeInput").focus({ preventScroll: true }); } catch (e) { /* older browsers */ }
+  });
+
+  function sportLabel() {
+    if (typeof sportName === "string" && sportName.length > 0) return sportName;
+    var id = curSport;
+    if (typeof id !== "string" || id.length === 0) return "Rally";
+    if (T.sports[id]) return T.sports[id];
+    // A saved sport whose name has not arrived (an older host build):
+    // the kind, never the internal id.
+    if (id.indexOf("custom") === 0) return T.sports.custom;
+    return id.charAt(0).toUpperCase() + id.slice(1);
   }
 
-  // --- Your team (decision 7) ------------------------------------------
-
-  // The remembered side for THIS share, else Neutral. A value made for
-  // another share (or a bare "A"/"B" from before the choice was keyed
-  // by share) is not this match's and is dropped.
-  function readTeam(id) {
-    try {
-      var raw = localStorage.getItem(TEAM_KEY);
-      if (!raw) return "N";
-      var v = null;
-      try { v = JSON.parse(raw); } catch (e) { v = null; }
-      if (v && typeof v === "object" && v.share === id &&
-          (v.team === "A" || v.team === "B")) {
-        return v.team;
-      }
-      localStorage.removeItem(TEAM_KEY);
-      return "N";
-    } catch (e) {
-      return "N";
-    }
-  }
-
-  function writeTeam(id, v) {
-    try {
-      if (v === "N") localStorage.removeItem(TEAM_KEY);
-      else localStorage.setItem(TEAM_KEY, JSON.stringify({ share: id, team: v }));
-    } catch (e) {
-      // A private window or blocked storage: the choice lasts the page.
-    }
-  }
-
-  function setTeam(v) {
-    team = v === "A" || v === "B" ? v : "N";
-    if (shareId) writeTeam(shareId, team);
-    renderTeam();
-    renderNames();
-    if (lastSnapshot) renderResult(lastSnapshot);
-    setStatus();
-  }
-
-  // --- Swap sides (decision 7) ------------------------------------------
+  // --- Swap sides --------------------------------------------------------
 
   function readSwap() {
-    try {
-      return localStorage.getItem(SWAP_KEY) === "1";
-    } catch (e) {
-      return false;
-    }
+    try { return localStorage.getItem(SWAP_KEY) === "1"; } catch (e) { return false; }
   }
-
   function writeSwap(on) {
     try {
       if (on) localStorage.setItem(SWAP_KEY, "1");
       else localStorage.removeItem(SWAP_KEY);
-    } catch (e) {
-      // As above: the setting lasts the page.
-    }
+    } catch (e) { /* the setting lasts the page */ }
   }
-
-  // Only the drawing order changes: A stays A, B stays B, the colours,
-  // the serve dot and the names stay with their tiles.
   function renderSwap() {
     el("board").classList.toggle("swapped", swapped);
     el("swap").setAttribute("aria-pressed", swapped ? "true" : "false");
   }
-
   el("swap").addEventListener("click", function () {
     swapped = !swapped;
     writeSwap(swapped);
     renderSwap();
   });
 
-  function renderTeam() {
-    var buttons = el("teamChoices").querySelectorAll("button");
-    for (var i = 0; i < buttons.length; i++) {
-      var b = buttons[i];
-      b.setAttribute("aria-pressed", b.getAttribute("data-team") === team ? "true" : "false");
-    }
-    el("sideA").classList.toggle("mine", team === "A");
-    el("sideB").classList.toggle("mine", team === "B");
-  }
-
-  el("teamChoices").addEventListener("click", function (e) {
-    var target = e.target;
-    while (target && target !== this && !(target.tagName === "BUTTON")) {
-      target = target.parentNode;
-    }
-    if (!target || target === this) return;
-    setTeam(target.getAttribute("data-team"));
-  });
-
-  // --- Participants (decision 10) -------------------------------------
+  // --- Names (round 7 decision 10; tiles in initials since round 10) -----
 
   function nameList(value) {
     if (!Array.isArray(value)) return [];
@@ -452,20 +630,20 @@
     }
     return out;
   }
-
   function readParticipants(raw) {
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-      return null;
-    }
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
     var teamA = nameList(raw.teamA);
     var teamB = nameList(raw.teamB);
     if (teamA.length === 0 && teamB.length === 0) return null;
     return { teamA: teamA, teamB: teamB };
   }
-
-  // Shortest unambiguous display name within the match (decision 11):
-  // first name; first name plus surname initial when two first names
-  // collide; the full name when the initial collides too.
+  function firstLetter(name) {
+    var first = name.split(" ")[0] || "";
+    return first ? Array.from(first)[0].toLocaleUpperCase() : "";
+  }
+  // Shortest unambiguous display name within a set of names: first name;
+  // first name plus surname initial when two first names collide; the
+  // full name when the initial collides too (src/players.ts displayNames).
   function displayNames(list) {
     var first = list.map(function (n) { return n.split(" ")[0]; });
     var initial = list.map(function (n) {
@@ -485,93 +663,227 @@
       return clashInitial ? full : first[i] + " " + initial[i] + ".";
     });
   }
-
-  // The two side labels: the names when the share carries them, else
-  // Team A and Team B.
-  function sideLabels() {
-    var labelA = "Team A";
-    var labelB = "Team B";
+  // The tile form (src/players.ts tileNames): each player's first
+  // initial; only initials that collide in the visible set expand, and
+  // only as far as displayNames' ladder needs.
+  function tileForms(list) {
+    var out = list.map(function (n) { return firstLetter(n); });
+    var groups = {};
+    list.forEach(function (n, i) {
+      var key = out[i];
+      if (!key) return;
+      (groups[key] = groups[key] || []).push(i);
+    });
+    Object.keys(groups).forEach(function (key) {
+      var idx = groups[key];
+      if (idx.length < 2) return;
+      var expanded = displayNames(idx.map(function (i) { return list[i]; }));
+      idx.forEach(function (i, k) { out[i] = expanded[k]; });
+    });
+    return out;
+  }
+  function pair(parts) {
+    var kept = parts.filter(function (p) { return p && p.length > 0; });
+    if (kept.length === 0) return null;
+    if (kept.length === 1) return kept[0];
+    return fill(T.pair, { a: kept[0], b: kept[1] });
+  }
+  function tileLabels() {
+    var a = T.teamA;
+    var b = T.teamB;
+    if (names) {
+      var all = names.teamA.concat(names.teamB);
+      var forms = tileForms(all);
+      a = pair(forms.slice(0, names.teamA.length)) || a;
+      b = pair(forms.slice(names.teamA.length)) || b;
+    }
+    return { a: a, b: b };
+  }
+  // The result reads a side by its names (the display names, not the
+  // initials: a sentence is a list), else Team A / Team B.
+  function sideName(side) {
     if (names) {
       var all = names.teamA.concat(names.teamB);
       var shown = displayNames(all);
-      var a = shown.slice(0, names.teamA.length);
-      var b = shown.slice(names.teamA.length);
-      if (a.length > 0) labelA = a.join(" & ");
-      if (b.length > 0) labelB = b.join(" & ");
+      var part = side === "A" ? shown.slice(0, names.teamA.length) : shown.slice(names.teamA.length);
+      var joined = pair(part);
+      if (joined) return joined;
     }
-    return { a: labelA, b: labelB };
+    return side === "A" ? T.teamA : T.teamB;
   }
-
+  // FEEDBACK ROUND 27, SECOND PASS: in a 1 v 1 match the tiles read the
+  // FULL names when both fit their tiles, else the names as the lists
+  // show them (first name, the display ladder on a clash), else the
+  // tile rule's initials. One level for both tiles, so the two sides
+  // never read in different forms. Doubles keep the initials (a pair
+  // of full names is a sentence, not a label).
+  // Round 27 review: "1 v 1" is the HOST's word (snapshot.singles): the
+  // name lists drop unnamed players, so a doubles match could look like
+  // one name a side. Without the flag (an older host) the initials stay.
+  function singlesLevels() {
+    if (!names || !lastSnapshot || lastSnapshot.singles !== true) return null;
+    if (names.teamA.length > 1 || names.teamB.length > 1) return null;
+    var all = names.teamA.concat(names.teamB);
+    var shown = displayNames(all);
+    var tiles = tileForms(all);
+    var at = function (list, side) {
+      if (side === "A") return names.teamA.length ? list[0] : T.teamA;
+      return names.teamB.length ? list[names.teamA.length] : T.teamB;
+    };
+    return [
+      { a: at(all, "A"), b: at(all, "B") },
+      { a: at(shown, "A"), b: at(shown, "B") },
+      { a: at(tiles, "A"), b: at(tiles, "B") }
+    ];
+  }
+  function fits(node) { return node.scrollWidth <= node.clientWidth + 1; }
   function renderNames() {
-    var labels = sideLabels();
-    el("nameA").querySelector(".label").textContent = labels.a;
-    el("nameB").querySelector(".label").textContent = labels.b;
-    var buttons = el("teamChoices").querySelectorAll("button");
-    for (var i = 0; i < buttons.length; i++) {
-      var side = buttons[i].getAttribute("data-team");
-      if (side === "A") buttons[i].textContent = labels.a;
-      else if (side === "B") buttons[i].textContent = labels.b;
+    var levels = singlesLevels();
+    if (!levels) {
+      var labels = tileLabels();
+      el("nameA").textContent = labels.a;
+      el("nameB").textContent = labels.b;
+      return;
+    }
+    for (var i = 0; i < levels.length; i++) {
+      el("nameA").textContent = levels[i].a;
+      el("nameB").textContent = levels[i].b;
+      // Measured only once the board is laid out; before that the full
+      // names stand and the next render (or a resize) decides.
+      if (!el("board").classList.contains("show")) return;
+      if (fits(el("nameA")) && fits(el("nameB"))) return;
     }
   }
+  var resizeTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderNames, 120);
+  });
 
-  // --- The live match ---------------------------------------------------
+  // --- The live match -------------------------------------------------------
 
-  function renderSnapshot(snap) {
-    var labels = snap.pointLabels || ["0", "0"];
-    el("pointsA").textContent = String(labels[0]);
-    el("pointsB").textContent = String(labels[1]);
-    el("setsA").textContent = String(snap.setsWonA || 0);
-    el("setsB").textContent = String(snap.setsWonB || 0);
+  // Viewer-perspective ball placement (src/components/Scoreboard.tsx
+  // ballJustify): the other team serves from the far end with the sides
+  // mirrored, the host's team from the near end as-is.
+  function ballJustify(isOpponent, courtSide) {
+    if (isOpponent) {
+      if (courtSide === "left") return "flex-end";
+      if (courtSide === "right") return "flex-start";
+      return "center";
+    }
+    if (courtSide === "left") return "flex-start";
+    if (courtSide === "right") return "flex-end";
+    return "center";
+  }
 
+  // "Eric serves": the serving player's name when the host's snapshot
+  // says which player of the serving side serves (serverIndex, round 27)
+  // and that player has a name. Nothing is guessed.
+  // ROUND 27 REVIEW: the host uploads the serving player's NAME
+  // (snapshot.serverName, src/shareExtras.ts): the name lists the relay
+  // carries are compacted (an unnamed player is dropped), so an index
+  // into them named the wrong player. Shown in the shortest unambiguous
+  // form across both sides. A name that is NOT in the current lists
+  // shows nothing (round 27 verify: it is a player replaced since the
+  // last point; the host caps the name at the relay's 40, so a current
+  // name is always found).
+  function servingName(snap) {
+    var wanted = typeof snap.serverName === "string" ? snap.serverName.replace(/\s+/g, " ").trim() : "";
+    if (!wanted || !names) return null;
+    var all = names.teamA.concat(names.teamB);
+    var at = all.map(function (n) { return n.replace(/\s+/g, " ").trim(); }).indexOf(wanted);
+    if (at < 0) return null;
+    return fill(T.serves, { name: displayNames(all)[at] });
+  }
+
+  function renderServe(snap) {
+    var live = !matchOver && !shareOver && snap.winner == null && snap.ended !== true;
+    var side = live && (snap.server === "A" || snap.server === "B") ? snap.server : null;
+    var courtSide = snap.serveCourtSide === "left" || snap.serveCourtSide === "right" ? snap.serveCourtSide : "none";
+    ["A", "B"].forEach(function (s) {
+      var tile = el("tile" + s);
+      var lane = el("lane" + s);
+      var serving = side === s;
+      tile.classList.toggle("serving", serving);
+      if (!serving) return;
+      var isOpponent = s === "B";
+      var justify = ballJustify(isOpponent, courtSide);
+      lane.style.justifyContent = justify;
+      // The name sits on the ball's inner side, so the ball itself stays
+      // on the serve court corner (as on the app's tiles): a ball packed
+      // to the right edge comes last. (Reversing the row instead would
+      // also reverse where flex-end packs.)
+      var ballLast = justify === "flex-end";
+      el("ball" + s).style.order = ballLast ? "1" : "0";
+      el("serve" + s).style.order = ballLast ? "0" : "1";
+      var number = snap.serverNumber === 1 || snap.serverNumber === 2 ? String(snap.serverNumber) : "";
+      el("ball" + s).textContent = number;
+      el("serve" + s).textContent = servingName(snap) || "";
+    });
+  }
+
+  function renderSets(snap) {
     var pairs = snap.gamesBySet || snap.setPairs || [];
     var tbs = snap.tiebreaksBySet || [];
-    var rowA = el("rowA");
-    var rowB = el("rowB");
-    rowA.textContent = "";
-    rowB.textContent = "";
+    var row = el("setRow");
+    row.textContent = "";
+    row.classList.toggle("dense", pairs.length > 5);
+    row.classList.toggle("denser", pairs.length > 7);
+    var decided = snap.winner === "A" || snap.winner === "B";
+    var current = typeof snap.currentSetIndex === "number"
+      ? Math.min(Math.max(0, snap.currentSetIndex), Math.max(0, pairs.length - 1))
+      : pairs.length - 1;
     for (var i = 0; i < pairs.length; i++) {
-      var tdA = document.createElement("td");
-      var tdB = document.createElement("td");
-      tdA.textContent = String(pairs[i][0]);
-      tdB.textContent = String(pairs[i][1]);
-      var tb = tbs[i];
-      if (tb) {
-        var supA = document.createElement("sup");
-        supA.textContent = String(tb[0]);
-        tdA.appendChild(supA);
-        var supB = document.createElement("sup");
-        supB.textContent = String(tb[1]);
-        tdB.appendChild(supB);
-      }
-      rowA.appendChild(tdA);
-      rowB.appendChild(tdB);
+      var a = Number(pairs[i] && pairs[i][0]) || 0;
+      var b = Number(pairs[i] && pairs[i][1]) || 0;
+      var tb = Array.isArray(tbs[i]) && tbs[i].length === 2 ? tbs[i] : null;
+      var complete = i !== current || decided || matchOver;
+      var col = document.createElement("div");
+      col.className = "set";
+      [[a, b, "a"], [b, a, "b"]].forEach(function (cell, k) {
+        var n = document.createElement("b");
+        n.textContent = String(cell[0]);
+        if (!complete) n.className = "live";
+        else if (cell[0] > cell[1]) n.className = "won-" + cell[2];
+        if (tb) {
+          var s = document.createElement("small");
+          s.textContent = String(tb[k]);
+          n.appendChild(s);
+        }
+        col.appendChild(n);
+      });
+      row.appendChild(col);
     }
+    // The newest set in view when the row outgrows the screen.
+    var box = el("sets");
+    box.scrollLeft = box.scrollWidth;
+  }
 
-    // The serve dot follows the engine's server while the match is live;
-    // an ended snapshot (or a share that is gone) shows no server, and
-    // the engine says "no server" itself for a custom game without a
-    // serve rule (round 14, decision 3).
-    var live = !matchOver && !shareOver;
-    el("sideA").classList.toggle("serving", live && snap.server === "A");
-    el("sideB").classList.toggle("serving", live && snap.server === "B");
+  function renderSnapshot(snap) {
+    var over = matchOver || snap.winner === "A" || snap.winner === "B";
+    // A decided match shows sets won in the tiles, as the app does.
+    var labels = over
+      ? [String(snap.setsWonA || 0), String(snap.setsWonB || 0)]
+      : (snap.pointLabels || ["0", "0"]);
+    el("pointsA").textContent = String(labels[0]);
+    el("pointsB").textContent = String(labels[1]);
+    renderSets(snap);
+    renderServe(snap);
     renderResult(snap);
   }
 
-  // The result, worded from the chosen side (decision 7): "you won" or
-  // "you lost" for a side, "Team A won" (or the names) for Neutral, and
-  // "match ended" for a match ended by hand with no winner.
   function resultTitle(snap) {
     var winner = snap && (snap.winner === "A" || snap.winner === "B") ? snap.winner : null;
-    if (winner === null) return "match ended";
-    if (team === "A" || team === "B") return team === winner ? "you won" : "you lost";
-    var labels = sideLabels();
-    return (winner === "A" ? labels.a : labels.b) + " won";
+    if (winner === null) return T.matchEnded;
+    return fill(T.won, { name: sideName(winner) });
   }
 
   function renderResult(snap) {
-    el("sideA").classList.toggle("won", snap.winner === "A");
-    el("sideB").classList.toggle("won", snap.winner === "B");
-    if (matchOver) {
+    if (matchOver && snap.discarded === true) {
+      el("bannerTitle").textContent = T.sharingEnded;
+      el("bannerHint").textContent = T.discardedHint;
+      el("banner").classList.add("show");
+    } else if (matchOver) {
       el("bannerTitle").textContent = resultTitle(snap);
       el("bannerHint").textContent = "";
       el("banner").classList.add("show");
@@ -582,63 +894,89 @@
 
   // Within a match the seq only moves forward.
   function applySnapshot(seq, snap) {
-    if (typeof seq !== "number" || seq <= curSeq || !snap) return;
+    if (typeof seq !== "number" || seq <= curSeq || !snap || typeof snap !== "object") return;
     curSeq = seq;
     lastSnapshot = snap;
     matchOver = snap.ended === true;
+    if (typeof snap.sportName === "string" && snap.sportName.trim().length > 0) {
+      sportName = snap.sportName.trim().slice(0, 40);
+    }
     renderSnapshot(snap);
   }
 
-  // One relay answer (share-join or share-state).
-  function applyShare(data) {
-    if (typeof data.sport === "string" && data.sport.length > 0) {
-      curSport = data.sport;
-      el("sport").textContent = sportLabel(curSport);
+  // One relay answer (share-join, share-state, or a "snapshot" push).
+  // `askedAt`: when the share-state answer was ASKED for (absent for a
+  // push). Round 27 review: an answer asked before the last names push
+  // cannot put the old names back (a names change moves no seq).
+  function applyShare(data, askedAt) {
+    if (!joined) return;
+    if (typeof data.sport === "string" && data.sport.length > 0) curSport = data.sport;
+    var namesChanged = false;
+    if ("participants" in data && !(typeof askedAt === "number" && askedAt < namesPushedAt)) {
+      names = readParticipants(data.participants);
+      namesChanged = true;
     }
-    names = readParticipants(data.participants);
-    renderNames();
     applySnapshot(data.seq, data.snapshot);
+    renderNames();
+    // A names-only update re-draws the serve line too (round 27 review).
+    if (namesChanged && lastSnapshot) renderServe(lastSnapshot);
+    el("sport").textContent = sportLabel();
     if (lastSnapshot) renderResult(lastSnapshot);
     setStatus();
+    announce();
   }
 
-  // The share is gone (404 on join or poll): the terminal state. After an
-  // ended snapshot it is the expected end of the match's share; without
-  // one the host stopped sharing mid-match, or the share idled out.
+  // Round 27 review: the screen reader hears the SCORE once per change
+  // ("D & J 30, T & A 15"), not the whole board again; the result and the
+  // end are announced by their banner line.
+  var lastAnnounced = "";
+  function announce() {
+    var text;
+    if (el("banner").classList.contains("show")) {
+      text = el("bannerTitle").textContent;
+    } else {
+      text = el("nameA").textContent + " " + el("pointsA").textContent + ", " +
+        el("nameB").textContent + " " + el("pointsB").textContent;
+    }
+    if (text === lastAnnounced) return;
+    lastAnnounced = text;
+    el("announce").textContent = text;
+  }
+
+  // The share is gone (404), or its ended snapshot arrived: the terminal
+  // state. Without an ended snapshot the host stopped sharing mid-match,
+  // or the share idled out.
   function markShareEnded() {
     if (shareOver) return;
     shareOver = true;
     clearTimeout(timer);
+    stopLive();
     if (matchOver && lastSnapshot) {
-      el("bannerTitle").textContent = resultTitle(lastSnapshot);
-      el("bannerHint").textContent = "";
+      renderResult(lastSnapshot);
     } else {
-      el("bannerTitle").textContent = "sharing ended";
-      el("bannerHint").textContent =
-        "The host stopped sharing. The score above is the last one received.";
+      el("bannerTitle").textContent = T.sharingEnded;
+      el("bannerHint").textContent = T.sharingEndedHint;
+      el("banner").classList.add("show");
     }
-    el("banner").classList.add("show");
-    el("sideA").classList.remove("serving");
-    el("sideB").classList.remove("serving");
+    el("tileA").classList.remove("serving");
+    el("tileB").classList.remove("serving");
     setStatus();
+    announce();
   }
 
   function setStatus() {
     if (!joined) return;
-    if (shareOver) {
-      el("statusText").textContent = matchOver && lastSnapshot ? resultTitle(lastSnapshot) : "ended";
-      el("dot").className = "off";
-      return;
-    }
-    if (matchOver && lastSnapshot) {
-      el("statusText").textContent = resultTitle(lastSnapshot);
+    if (shareOver || matchOver) {
+      el("statusText").textContent = matchOver && lastSnapshot && !lastSnapshot.discarded ? T.final : T.ended;
       el("dot").className = "off";
       return;
     }
     var stale = Date.now() - lastOk > STALE_MS;
     el("dot").className = stale ? "stale" : "";
-    el("statusText").textContent = stale ? "stale" : "live";
+    el("statusText").textContent = stale ? T.reconnecting : T.live;
   }
+
+  // --- Asking: share-state ----------------------------------------------
 
   // One JSON POST to an edge function. Resolves {status, data}; data is
   // null when the body is not JSON or the status is not 2xx. Rejects only
@@ -661,6 +999,11 @@
     });
   }
 
+  function cadence() {
+    if (failures >= SLOW_AFTER) return POLL_SLOW_MS;
+    return liveJoined ? POLL_LIVE_MS : POLL_MS;
+  }
+
   function schedule(ms) {
     clearTimeout(timer);
     if (shareOver || !joined || document.hidden) return;
@@ -670,92 +1013,225 @@
   function poll() {
     if (shareOver || !joined || inFlight || document.hidden) return;
     inFlight = true;
+    var askedAt = Date.now();
     post("/share-state", { shareId: shareId }).then(function (res) {
       inFlight = false;
+      if (!joined || shareOver) return;
       if (res.status === 404) {
-        // Row gone: the share ended (the match ended and share-end
-        // followed, the host stopped, or the TTL swept it).
         markShareEnded();
         return;
       }
       if (!res.data) {
         failures += 1;
-        schedule(failures >= SLOW_AFTER ? POLL_SLOW_MS : POLL_MS);
+        schedule(cadence());
         return;
       }
       failures = 0;
       lastOk = Date.now();
-      applyShare(res.data);
+      applyShare(res.data, askedAt);
       // The ended snapshot is terminal (round 24: the kept row keeps
-      // answering, so waiting for a 404 would poll for a day).
+      // answering, so waiting for a 404 would ask for a day).
       if (matchOver) {
         markShareEnded();
         return;
       }
-      schedule(POLL_MS);
+      if (endedPending) {
+        // Round 27 review: the host ended the share while this ask was on
+        // the wire; its answer predates the end, so ask again now.
+        endedPending = false;
+        schedule(0);
+        return;
+      }
+      schedule(cadence());
     }, function () {
       inFlight = false;
+      if (!joined || shareOver) return;
       failures += 1;
-      schedule(failures >= SLOW_AFTER ? POLL_SLOW_MS : POLL_MS);
+      schedule(endedPending ? 0 : cadence());
+      endedPending = false;
     });
   }
 
+  // --- Live: the relay's Realtime channel (decision 6) ---------------------
+  // Phoenix protocol v1 (JSON), the one supabase-js speaks: join the topic
+  // "realtime:share:<id>", heartbeat on "phoenix", read "broadcast" events.
+
+  function wsSend(message) {
+    if (!ws || ws.readyState !== 1) return;
+    try { ws.send(JSON.stringify(message)); } catch (e) { /* the close handler follows */ }
+  }
+
+  function startLive() {
+    if (!("WebSocket" in window) || !shareId || shareOver || ws) return;
+    var topic = "realtime:share:" + shareId;
+    var socket;
+    try { socket = new WebSocket(WS_URL); } catch (e) { scheduleReconnect(); return; }
+    ws = socket;
+    socket.onopen = function () {
+      wsRef += 1;
+      wsSend({
+        topic: topic,
+        event: "phx_join",
+        payload: {
+          config: {
+            broadcast: { ack: false, self: false },
+            presence: { key: "" },
+            postgres_changes: [],
+            "private": false
+          },
+          access_token: ANON_KEY
+        },
+        ref: String(wsRef),
+        join_ref: String(wsRef)
+      });
+      clearInterval(heartbeat);
+      lastHeartbeatReply = Date.now();
+      heartbeat = setInterval(function () {
+        // Round 27 review: a socket that died without a close event stops
+        // answering heartbeats; two missed replies close it, which falls
+        // back to asking and reconnects.
+        if (Date.now() - lastHeartbeatReply > HEARTBEAT_MS * 2 + 5000) {
+          try { socket.close(); } catch (e) { /* the close handler follows */ }
+          if (ws === socket) { ws = null; liveJoined = false; clearInterval(heartbeat); schedule(cadence()); scheduleReconnect(); }
+          return;
+        }
+        wsRef += 1;
+        wsSend({ topic: "phoenix", event: "heartbeat", payload: {}, ref: String(wsRef) });
+      }, HEARTBEAT_MS);
+    };
+    socket.onmessage = function (event) {
+      var m = null;
+      try { m = JSON.parse(event.data); } catch (e) { return; }
+      if (!m) return;
+      if (m.topic === "phoenix") {
+        // The heartbeat's reply: the socket is alive (round 27 review).
+        if (m.event === "phx_reply") lastHeartbeatReply = Date.now();
+        return;
+      }
+      if (m.topic !== topic) return;
+      if (m.event === "phx_reply" && m.payload && m.payload.status === "ok" && !liveJoined) {
+        liveJoined = true;
+        reconnects = 0;
+        // Anything scored while the channel was down: one ask, then the
+        // slow safety net.
+        clearTimeout(timer);
+        poll();
+        return;
+      }
+      if (m.event === "phx_error" || m.event === "phx_close") {
+        socket.close();
+        return;
+      }
+      if (m.event !== "broadcast" || !m.payload) return;
+      var kind = m.payload.event;
+      var data = m.payload.payload || {};
+      if (kind === "snapshot") {
+        lastOk = Date.now();
+        // A score push carries the row's names too (round 27 verify).
+        if ("participants" in data) namesPushedAt = Date.now();
+        applyShare(data);
+        if (matchOver) markShareEnded();
+      } else if (kind === "participants") {
+        lastOk = Date.now();
+        namesPushedAt = Date.now();
+        applyShare({ participants: data.participants });
+      } else if (kind === "ended") {
+        // The host ended the share: the relay has the final state. An ask
+        // already on the wire read the row before the end, so it asks
+        // again when it lands (round 27 review).
+        if (inFlight) {
+          endedPending = true;
+        } else {
+          clearTimeout(timer);
+          poll();
+        }
+      }
+    };
+    socket.onclose = function () {
+      // Round 27 verify: a socket the watchdog or stopLive already
+      // detached closes late (Chromium waits up to 60 s on a dead
+      // connection); by then `heartbeat` and liveJoined belong to its
+      // replacement, and whoever detached it did the cleanup.
+      if (ws !== socket) return;
+      ws = null;
+      liveJoined = false;
+      clearInterval(heartbeat);
+      if (shareOver) return;
+      // Back to asking until the channel is back.
+      schedule(cadence());
+      scheduleReconnect();
+    };
+    socket.onerror = function () { /* onclose follows */ };
+  }
+
+  function scheduleReconnect() {
+    clearTimeout(reconnectTimer);
+    if (shareOver || !joined) return;
+    var wait = RECONNECT_MS[Math.min(reconnects, RECONNECT_MS.length - 1)];
+    reconnects += 1;
+    reconnectTimer = setTimeout(function () {
+      if (!document.hidden) startLive();
+    }, wait);
+  }
+
+  function stopLive() {
+    clearTimeout(reconnectTimer);
+    clearInterval(heartbeat);
+    liveJoined = false;
+    if (ws) {
+      var socket = ws;
+      ws = null;
+      try { socket.close(); } catch (e) { /* already closed */ }
+    }
+  }
+
+  // --- Join -------------------------------------------------------------------
+
   function start(code) {
     post("/share-join", { code: code }).then(function (res) {
-      if (res.status === 404) {
-        showForm("No live match with that code");
-        return;
-      }
-      if (res.status === 429) {
-        showForm("Too many attempts. Wait a few minutes and try again");
-        return;
-      }
-      if (!res.data) {
-        showForm("Could not reach the score service. Try again");
-        return;
-      }
+      if (res.status === 404) { showForm(T.errNotFound); return; }
+      if (res.status === 429) { showForm(T.errTooMany); return; }
+      if (!res.data) { showForm(T.errNetwork); return; }
       joined = true;
       shareId = res.data.shareId;
       lastOk = Date.now();
+      document.body.classList.add("following");
       el("joinForm").classList.remove("show");
       el("board").classList.add("show");
-      el("codeLabel").textContent = "code " + code;
-      el("dot").className = "";
-      el("statusText").textContent = "live";
-      // The side is this share's: the same code on a reload keeps it,
-      // any other share starts Neutral.
-      team = typeof shareId === "string" ? readTeam(shareId) : "N";
-      renderTeam();
+      el("codeLabel").textContent = fill(T.code, { code: code.slice(0, 3) + " " + code.slice(3) });
       applyShare(res.data);
       setInterval(setStatus, 1000);
       if (matchOver) {
         markShareEnded();
         return;
       }
+      startLive();
       schedule(POLL_MS);
     }, function () {
-      showForm("Could not reach the score service. Try again");
+      showForm(T.errNetwork);
     });
   }
 
-  // Pause while hidden (no background polling), resume with an immediate
-  // poll when the tab comes back.
+  // Pause asking while hidden, resume with an immediate ask when the tab
+  // comes back (and bring the channel back if it dropped meanwhile).
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
       clearTimeout(timer);
     } else if (joined && !shareOver) {
       clearTimeout(timer);
       poll();
+      if (!ws) startLive();
     }
   });
 
-  renderTeam();
+  applyLanguage();
   renderSwap();
-  var code = (new URLSearchParams(location.search).get("code") || "").trim();
+  var code = (params.get("code") || "").trim();
   if (CODE_RE.test(code)) {
+    el("sport").textContent = "Rally";
     start(code);
   } else {
-    showForm(code ? "The code is 6 digits" : "");
+    showForm(code ? T.errDigits : "");
   }
 })();
 </script>
