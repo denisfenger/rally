@@ -13,9 +13,10 @@ icon.svg             the court-sides mark on the court-night ground (favicon)
 style.css            shared tokens and components (STYLE_GUIDE.md palette)
 index.html           landing: hero with a working watch scorer (engine-faithful
                      padel: golden point or advantage, tiebreak, serve rotation,
-                     viewer-perspective serve ball), how it works, sports,
-                     live sharing (the phone Board runs the same match), trust,
-                     free and Pro (features only, no prices)
+                     viewer-perspective serve ball, the round 28 deciding-point
+                     card at 40:40), how it works, sports, live sharing (the
+                     phone Board runs the same match as the watch's mirror),
+                     trust, free and Pro (features only, no prices)
 privacy/index.html   privacy policy, EN with the DE version beneath
 terms/index.html     terms of use, EN with the DE version beneath
 support/index.html   contact, what the app is, common questions
@@ -78,6 +79,14 @@ Later content pushes work with the headless git recipe.
 - NO pricing on the landing (the store is the source of truth).
 - CONTENT CURRENCY: the landing describes features, so any round that
   adds or removes a feature updates `index.html` in the same round.
+  (Round 28: the watch mock asks the deciding point's side with the
+  app's card, and the workout card says the workout pauses when nobody
+  scores for ten minutes.)
+- Every control reads as one: `cursor: pointer`, a visible hover and a
+  visible pressed state. The one element that listens for clicks and is
+  NOT a control is the landing's deciding-point card: it catches clicks
+  only to refuse them, so it keeps the default cursor (the verifier
+  checks both sides of that).
 - House voice: sentence case, no emoji, no exclamation marks, no em
   dashes in visible copy.
 
@@ -165,6 +174,31 @@ carries no per-IP rate limit by design. The page embedded in
 `*.supabase.co` serves as text/plain; this static page supersedes it,
 and the edge function can be removed at the next backend pass.
 
+## The landing's watch mock at the deciding point (feedback round 28)
+
+The hero watch runs the padel preset. At 40:40 with golden point the
+receivers pick the side, so, as on the watch, an opaque card lies over
+the two tiles (never over the undo row) until it is answered: the lead
+line ("You set the side." / "Your opponents set the side."), the
+question from the wearer's position ("Which side do you receive on?"
+when they serve, "Which side do you serve from?" when we do) and two
+big neutral buttons, Left on the left and Right on the right, never
+mirrored, never preselected, each with the court drawing (our half at
+the bottom, the receiving box in the receivers' colour, the optic
+server dot and a dashed serve line into the box). The tiles take no
+point while it shows; a click on the card outside the buttons, or on a
+button in the first 0.7 s, is refused with a small nudge (the watch's
+failure haptic). The status band reads "Golden point" from the open
+side until the point is played, "Padel" otherwise. While the side is
+open the ball is centred (engine `serveCourtSide` none), which only
+the phone shows; after the answer the ball sits where the server
+stands. Undo after an answer brings the card back; undo of the
+deciding point keeps the answer. The phone mock is the MIRROR of the
+watch's match: it shows no card, and a tap on it still scores (the
+engine never refuses a point from the other device), which closes the
+watch's card with the side unanswered. `window.rallyDemo` exposes
+`cardUp()`, `cardAgeMs()` and `armMs` for the verifier.
+
 ## Verifying before a push
 
 `node scripts/verify-site.mjs` drives the landing in headless Edge
@@ -175,14 +209,34 @@ serve ball's tile, edge and court side after every point on both
 mockups (the rule: our serve at the near/bottom edge below the number
 on the serve court side, right when the game's point total is even and
 left when odd; their serve at the far/top edge above the number with
-the sides mirrored); checks that no sport card is selected on load;
-lists every element with a click handler or interactive role and
-requires a computed `cursor: pointer` plus a visible hover and pressed
-state under real mouse events; renders 390, 768 and 1280 full-page
+the sides mirrored; CENTRED while the receivers' side is open, then
+the answer until the game ends); checks the deciding-point card end to
+end (shown exactly while the side is open; laid exactly over the tiles
+and clear of the undo row; opaque; question and lead from our position
+in both roles; Left left, Right right, neither preselected; each court
+drawing by its geometry and colours; real mouse clicks on the covered
+tiles land on the card and score nothing, programmatic clicks and
+Enter are refused, a button click inside 0.7 s is refused; answers by
+real clicks move the ball to the server's corner on both mockups; undo
+after the answer brings the card back, undo of the deciding point keeps
+the answer; the phone still scores; the status band names the point;
+the card fits the watch at 390 in both roles); checks that the
+retired "Receive / Left / Right" capsule is gone and that the workout
+card mentions the pause; checks that no sport card is selected on
+load; lists every element with a click handler or interactive role and
+requires a computed `cursor: pointer` (the card's two buttons
+included; the card itself must keep the default cursor) plus a visible
+hover and pressed state under real mouse events (the card buttons
+too, their release answering); renders 390, 768 and 1280 full-page
 PNGs with overflow probes; asserts no external request, no console
 error and no running animation under `prefers-reduced-motion:
 reduce`. PNGs land in `%TEMP%/rally-site-verify/` (set
-`RALLY_SITE_OUT` to change); eyeball them, sliced if tall.
+`RALLY_SITE_OUT` to change); eyeball them, sliced if tall. The card
+has its own: `watch-card-serve.png`, `watch-card-receive.png`,
+`watch-card-answered.png` (2x crops of the hero watch),
+`hero-card-1280.png`, `share-card-1280.png` (the phone's centred ball)
+and `hero-card-serve-390.png` / `hero-card-receive-390.png`. Last run
+2026-09-25: 4633 checks, all green.
 
 Why the protocol and not `msedge --screenshot`: headless Edge lays out
 no narrower than ~476 CSS px from the command line (kit `lessons.md`),
@@ -197,7 +251,12 @@ relay and a scripted WebSocket standing in for the Realtime channel,
 so every state is reached deterministically and read back out of the
 DOM: the channel join and a pushed score with no ask, the 10 s safety
 net and the 2.5 s fallback without WebSocket, the serve ball per team
-and court side with the serving name, colliding initials, the neutral
+and court side with the serving name, padel 40:40 with the receivers'
+side still open (round 28: the host uploads `serveCourtSide` none, the
+link centres the ball on the serving tile, with the serving name beside
+it the pair is centred as one and no corner is guessed; without a name
+the ball alone sits exactly in the middle; the answer then moves it to
+its corner), colliding initials, the neutral
 result, Swap sides, a saved sport by name, a best of nine below the
 tiles at 390, 844 and 1280, the ended snapshot as the result (the
 channel closes, asking stops), the mid-match stop, a discarded end,
@@ -205,7 +264,7 @@ German, the entry form's answers and the X back to it, no request
 beyond the relay, no console error, no overflow, and (second pass and
 review) the X top right, 1 v 1 full names on the host's word, the
 wide sizes, a server name not in the lists showing nothing, landscape
-fits. Last run 2026-09-25: 188 checks, all green. Run it after ANY change to
+fits. Last run 2026-09-25: 209 checks, all green. Run it after ANY change to
 `board/index.html`. A live smoke test against the deployed relay
 (share-create, share-uplink with an ended snapshot, share-end, the
 page on a local static server) is still worth one run before a

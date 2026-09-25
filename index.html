@@ -30,10 +30,27 @@
      edge below the number on the serve court side; theirs at the far edge
      above the number with the sides mirrored, targets/watch/ContentView.swift
      ScoreTile.ballAlignment), the sets as the stacked mini-table, the return
-     arrow in the bottom corner. It runs a faithful padel scorer: golden point
-     or advantage, best of three, tiebreak at 6-6, serve alternating per game
-     and one-then-two in the tiebreak, the receivers' court choice at the
-     golden point (packages/engine, padel preset). -->
+     arrow in the bottom corner, the sport in the status band beside the
+     clock. It runs a faithful padel scorer: golden point or advantage, best
+     of three, tiebreak at 6-6, serve alternating per game and one-then-two
+     in the tiebreak (packages/engine, padel preset).
+     THE DECIDING-POINT CARD (feedback round 28, STYLE_GUIDE "The
+     deciding-point card", targets/watch/DecidingPointCard.swift): at 40:40
+     with golden point the receivers pick the side, so an opaque card lies
+     over the tiles (never over the undo row) until it is answered. It asks
+     from the wearer's own position ("Which side do you receive on?" when
+     they serve, "Which side do you serve from?" when we do, the lead line
+     saying who sets the side), and offers two big neutral buttons, Left on
+     the left and Right on the right, never mirrored and never preselected,
+     each with the court drawing (our half at the bottom, the receiving box
+     in the receivers' colour, the optic server dot and a dashed serve line
+     into the box). The tiles take no point while it shows, a click on the
+     card outside the buttons does nothing but a brief nudge, and it ignores
+     clicks for 0.7 s after it appears. The status band names the point
+     ("Golden point") until it is played. While the side is open the ball is
+     centred (engine serveCourtSide none), which only the phone below shows;
+     after the answer it sits where the server stands. Undo after an answer
+     brings the card back; undo of the deciding point keeps the answer. -->
 <section class="band dark hero" id="top">
   <div class="wrap wide">
     <nav class="topbar" aria-label="Site">
@@ -70,14 +87,7 @@
             <div class="crown" aria-hidden="true"></div>
             <div class="sidebtn" aria-hidden="true"></div>
             <div class="screen">
-              <div class="statusrow" aria-hidden="true"><span class="clock">9:41</span></div>
-              <div class="toprow">
-                <div class="choice" id="wChoice" hidden>
-                  <span class="choice-lbl">Receive</span>
-                  <button class="choice-btn" id="wChoiceL" type="button" data-side="left">Left</button>
-                  <button class="choice-btn" id="wChoiceR" type="button" data-side="right">Right</button>
-                </div>
-              </div>
+              <div class="statusrow" aria-hidden="true"><span class="band-lbl" id="wBand">Padel</span><span class="clock">9:41</span></div>
               <div class="tiles">
                 <div class="tile us" id="wA" role="button" tabindex="0" aria-label="Point for us">
                   <span class="who">Us</span>
@@ -88,6 +98,20 @@
                   <span class="who">Them</span>
                   <span class="num" id="wPtsB">0</span>
                   <span class="ball" id="wBallB" aria-hidden="true"></span>
+                </div>
+                <div class="dcard" id="wCard" role="group" aria-labelledby="wCardQ" aria-describedby="wCardLead" tabindex="-1" hidden>
+                  <p class="dc-lead" id="wCardLead">You set the side.</p>
+                  <p class="dc-q" id="wCardQ">Which side do you receive on?</p>
+                  <div class="dc-btns">
+                    <button class="dc-btn" id="wLeft" type="button" data-side="left">
+                      <svg class="dc-court" viewBox="0 0 36 56" aria-hidden="true"><g id="wLeftCourt"><rect class="dc-box" x="18" y="28" width="16" height="14"/><rect class="dc-edge" x="1" y="1" width="34" height="54" rx="3"/><path class="dc-lines" d="M1 14H35M1 42H35M18 14V42"/><path class="dc-net" d="M1 28H35"/><path class="dc-serve" d="M11.5 10.3 23 29.8"/><path class="dc-optic" d="M26 35 20.2 31.4 25.7 28.2Z"/><circle class="dc-optic" cx="9" cy="6" r="4.5"/></g></svg>
+                      <span>Left</span>
+                    </button>
+                    <button class="dc-btn" id="wRight" type="button" data-side="right">
+                      <svg class="dc-court" viewBox="0 0 36 56" aria-hidden="true"><g id="wRightCourt"><rect class="dc-box" x="18" y="28" width="16" height="14"/><rect class="dc-edge" x="1" y="1" width="34" height="54" rx="3"/><path class="dc-lines" d="M1 14H35M1 42H35M18 14V42"/><path class="dc-net" d="M1 28H35"/><path class="dc-serve" d="M11.5 10.3 23 29.8"/><path class="dc-optic" d="M26 35 20.2 31.4 25.7 28.2Z"/><circle class="dc-optic" cx="9" cy="6" r="4.5"/></g></svg>
+                      <span>Right</span>
+                    </button>
+                  </div>
                 </div>
               </div>
               <div class="bottomrow">
@@ -176,7 +200,11 @@
      court blue, them right in clay, the ball viewer-perspective, the sets
      mini-table, the status line, the share strip. It renders the same
      state as the watch in the hero, and its tiles score too (the phone
-     doubles as the scorer). -->
+     doubles as the scorer). It is the MIRROR of the watch's match (round
+     28, decision 4): it shows no deciding-point card, only the ball centred
+     while the receivers' side is open, and a tap here still scores (the
+     engine never refuses a point from the other device), which closes the
+     watch's card with the side unanswered. -->
 <section class="band" id="share">
   <div class="wrap wide split flip">
     <div class="demo">
@@ -231,7 +259,7 @@
     <div class="grid3 trust-grid">
       <div class="card reveal">
         <h3>Counts as a workout</h3>
-        <p>With your permission, Rally records each match as a workout with heart rate and calories from the watch, so it counts toward your Activity rings. It never takes over a workout you already started in another app.</p>
+        <p>With your permission, Rally records each match as a workout with heart rate and calories from the watch, so it counts toward your Activity rings; when nobody scores for ten minutes, the workout pauses. It never takes over a workout you already started in another app.</p>
       </div>
       <div class="card reveal">
         <h3>Local first</h3>
@@ -301,9 +329,10 @@
   // game index across sets; in the tiebreak the first point, then every
   // two (engine tiebreakServer). Serve court side: the engine's
   // parityCourtSide over the points of BOTH sides (even total = right,
-  // odd = left), overridden by the receivers' choice at a golden point
-  // outside a tiebreak. One state feeds the watch and the phone, which is
-  // literally how the product works.
+  // odd = left), 'none' (the ball centred) while the receivers' side is
+  // open at a golden point, then their answer until the game ends
+  // (engine courtSide, round 28 decision 3). One state feeds the watch
+  // and the phone, which is literally how the product works.
   var $ = function (id) { return document.getElementById(id); };
   var LADDER = ['0', '15', '30', '40'];
   var SET = { target: 6, winBy: 2, deciderAt: 6 };
@@ -358,7 +387,9 @@
     if (st.tb) return tiebreakServer(st.tbFirst, st.pts[0] + st.pts[1]);
     return serverByAlternation(st.firstServer, st.gameIndex);
   }
+  // packages/engine/src/engine.ts courtSide, alternateUnits branch.
   function courtSide(st) {
+    if (st.choicePending) return 'none';
     if (!st.tb && st.choice) return st.choice;
     return parityCourtSide(st.pts[0] + st.pts[1]);
   }
@@ -430,11 +461,17 @@
     s = fresh(); history = [];
     render();
   }
+  // The answer (engine 'choice' event): it closes the question, and as a
+  // step of its own undo takes it back first (the card returns), while
+  // undoing the deciding point itself keeps it.
   function choose(side) {
-    if (!s.choicePending || s.tb) return;
+    if (side !== 'left' && side !== 'right') return false;
+    if (!s.choicePending || s.tb || s.winner !== null) return false;
     history.push(clone(s));
     s.choice = side;
+    s.choicePending = false;
     render();
+    return true;
   }
   function setDeuce(mode) {
     if (mode !== 'golden' && mode !== 'advantage') return;
@@ -506,6 +543,74 @@
     return (capital ? 'Padel' : 'padel') + ' · ' + (deuce === 'golden' ? 'golden point' : 'advantage') + ' · best of 3';
   }
 
+  // The deciding-point card (round 28): up while the receivers' side is
+  // open; the tiles under it take no point until it is answered.
+  var CARD_ARM_MS = 700;
+  var cardShownAt = 0;
+  var missTimer = null;
+  function cardUp(st) {
+    return st.winner === null && !st.tb && st.choicePending;
+  }
+  // The point's name stands in the status band from the moment the side
+  // is open until the point is played (an answer lives until the game
+  // ends, so a kept answer means the deciding point is still to play).
+  function decidingOn(st) {
+    return st.winner === null && !st.tb && (st.choicePending || st.choice !== null);
+  }
+  // Clicks are ignored for 0.7 s after the card appears (the tap that made
+  // 40:40, a double tap).
+  function cardArmed() {
+    return Date.now() - cardShownAt >= CARD_ARM_MS;
+  }
+  // CourtSideGlyph: the markup draws "we receive, Right" (the box bottom
+  // right, their server top left); Left mirrors it left to right, serving
+  // mirrors it top to bottom (our server near, their box far).
+  function drawCourt(g, weReceive, side) {
+    var fx = weReceive === (side === 'left');
+    var fy = !weReceive;
+    g.setAttribute('transform', 'matrix(' + (fx ? -1 : 1) + ' 0 0 ' + (fy ? -1 : 1) + ' ' + (fx ? 36 : 0) + ' ' + (fy ? 56 : 0) + ')');
+    g.querySelector('.dc-box').setAttribute('class', 'dc-box ' + (weReceive ? 'us' : 'them'));
+  }
+  function renderCard(live, srv) {
+    var card = $('wCard');
+    var up = live && cardUp(s);
+    var wasUp = !card.hidden;
+    if (up) {
+      // From the wearer's own position: we receive when they serve.
+      var weReceive = srv === 1;
+      $('wCardLead').textContent = weReceive ? 'You set the side.' : 'Your opponents set the side.';
+      $('wCardQ').textContent = weReceive ? 'Which side do you receive on?' : 'Which side do you serve from?';
+      drawCourt($('wLeftCourt'), weReceive, 'left');
+      drawCourt($('wRightCourt'), weReceive, 'right');
+    }
+    if (up && !wasUp) cardShownAt = Date.now();
+    var active = document.activeElement;
+    var tileFocused = active === $('wA') || active === $('wB');
+    var focusInCard = card.contains(active);
+    card.hidden = !up;
+    // The tiles under the card leave the tab order and the accessibility
+    // tree (the app's allowsHitTesting and accessibilityHidden).
+    var tiles = [$('wA'), $('wB')];
+    for (var i = 0; i < tiles.length; i++) {
+      tiles[i].tabIndex = up ? -1 : 0;
+      if (up) tiles[i].setAttribute('aria-hidden', 'true');
+      else tiles[i].removeAttribute('aria-hidden');
+    }
+    if (up && !wasUp && tileFocused) card.focus({ preventScroll: true });
+    if (!up && wasUp && focusInCard) $('wA').focus({ preventScroll: true });
+    $('wBand').textContent = decidingOn(s) ? 'Golden point' : 'Padel';
+  }
+  // A click the card refused (outside the buttons, or before it armed):
+  // the watch plays a failure haptic, the page nudges the card.
+  function miss() {
+    var card = $('wCard');
+    card.classList.remove('miss');
+    void card.offsetWidth;
+    card.classList.add('miss');
+    clearTimeout(missTimer);
+    missTimer = setTimeout(function () { card.classList.remove('miss'); }, 450);
+  }
+
   function render() {
     var l = labels(s), live = s.winner === null;
     var srv = live ? server(s) : null;
@@ -521,16 +626,7 @@
         balls[i][j].className = ballPlace(i === 1, side);
       }
     }
-    // Receivers' choice at the golden point: the engine's default is the
-    // parity side; a made choice wins.
-    var choiceRow = $('wChoice');
-    var showChoice = live && s.choicePending;
-    choiceRow.hidden = !showChoice;
-    var current = s.choice || parityCourtSide(s.pts[0] + s.pts[1]);
-    $('wChoiceL').classList.toggle('is-on', showChoice && current === 'left');
-    $('wChoiceR').classList.toggle('is-on', showChoice && current === 'right');
-    $('wChoiceL').setAttribute('aria-pressed', showChoice && current === 'left' ? 'true' : 'false');
-    $('wChoiceR').setAttribute('aria-pressed', showChoice && current === 'right' ? 'true' : 'false');
+    renderCard(live, srv);
 
     $('wMini').innerHTML = miniHtml(s, 3);
     $('pMini').innerHTML = miniHtml(s, 0);
@@ -553,19 +649,35 @@
 
   function touched() { $('watch').classList.add('touched'); }
 
-  function bindTile(id, side) {
+  // The watch owns the match: its tiles take no point while the card is
+  // up (a point reaching one anyway is caught like a tap on the card). The
+  // phone is the mirror and shows no card, so its tiles score as always:
+  // the engine never refuses a point from the other device, and that point
+  // closes the watch's card with the side unanswered.
+  function bindTile(id, side, onWatch) {
     var el = $(id);
-    el.addEventListener('click', function () { touched(); point(side); });
+    var score = function () {
+      touched();
+      if (onWatch && cardUp(s)) { miss(); return; }
+      point(side);
+    };
+    el.addEventListener('click', score);
     el.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched(); point(side); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); score(); }
     });
   }
-  bindTile('wA', 0); bindTile('wB', 1); bindTile('pA', 0); bindTile('pB', 1);
+  bindTile('wA', 0, true); bindTile('wB', 1, true); bindTile('pA', 0, false); bindTile('pB', 1, false);
   $('wUndo').addEventListener('click', function () { touched(); undo(); });
   $('wOvUndo').addEventListener('click', undo);
   $('wEnd').addEventListener('click', reset);
-  $('wChoiceL').addEventListener('click', function () { choose('left'); });
-  $('wChoiceR').addEventListener('click', function () { choose('right'); });
+  // Every click on the card is the card's: a button answers once armed,
+  // anything else is refused.
+  $('wCard').addEventListener('click', function (e) {
+    touched();
+    var btn = e.target && e.target.closest ? e.target.closest('.dc-btn') : null;
+    if (!btn || !cardArmed()) { miss(); return; }
+    choose(btn.getAttribute('data-side'));
+  });
 
   var segs = document.querySelectorAll('.seg-btn');
   for (var k = 0; k < segs.length; k++) {
@@ -586,7 +698,10 @@
     point: point, undo: undo, reset: reset, choose: choose, setDeuce: setDeuce,
     state: function () { return clone(s); },
     server: function () { return s.winner === null ? server(s) : null; },
-    courtSide: function () { return courtSide(s); }
+    courtSide: function () { return courtSide(s); },
+    cardUp: function () { return cardUp(s); },
+    cardAgeMs: function () { return cardUp(s) ? Date.now() - cardShownAt : null; },
+    armMs: CARD_ARM_MS
   };
   render();
 })();
