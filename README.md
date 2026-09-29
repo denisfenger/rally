@@ -85,7 +85,11 @@ Later content pushes work with the headless git recipe.
   sends the score over its own Wi-Fi or cellular, so the phone can stay
   at home; the privacy policy names the device that keeps the score as
   the sender, with the iPhone as a backup, and the rate limit's IP as
-  that device's; support answers "Can I share without my iPhone?".)
+  that device's; support answers "Can I share without my iPhone?".
+  Round 30 verify: terms section 4 says followers of a shared match see
+  the player names you added (the "no field for names" line was stale
+  since round 7), and the privacy policy's rate-limit line names the
+  iPad beside the iPhone.)
 - Every control reads as one: `cursor: pointer`, a visible hover and a
   visible pressed state. The one element that listens for clicks and is
   NOT a control is the landing's deciding-point card: it catches clicks
