@@ -81,7 +81,11 @@ Later content pushes work with the headless git recipe.
   adds or removes a feature updates `index.html` in the same round.
   (Round 28: the watch mock asks the deciding point's side with the
   app's card, and the workout card says the workout pauses when nobody
-  scores for ten minutes.)
+  scores for ten minutes. Round 30: the sharing section says the watch
+  sends the score over its own Wi-Fi or cellular, so the phone can stay
+  at home; the privacy policy names the device that keeps the score as
+  the sender, with the iPhone as a backup, and the rate limit's IP as
+  that device's; support answers "Can I share without my iPhone?".)
 - Every control reads as one: `cursor: pointer`, a visible hover and a
   visible pressed state. The one element that listens for clicks and is
   NOT a control is the landing's deciding-point card: it catches clicks
@@ -236,7 +240,7 @@ has its own: `watch-card-serve.png`, `watch-card-receive.png`,
 `watch-card-answered.png` (2x crops of the hero watch),
 `hero-card-1280.png`, `share-card-1280.png` (the phone's centred ball)
 and `hero-card-serve-390.png` / `hero-card-receive-390.png`. Last run
-2026-09-25: 4633 checks, all green.
+2026-09-29 (round 30): 4633 checks, all green.
 
 Why the protocol and not `msedge --screenshot`: headless Edge lays out
 no narrower than ~476 CSS px from the command line (kit `lessons.md`),
@@ -264,9 +268,9 @@ German, the entry form's answers and the X back to it, no request
 beyond the relay, no console error, no overflow, and (second pass and
 review) the X top right, 1 v 1 full names on the host's word, the
 wide sizes, a server name not in the lists showing nothing, landscape
-fits. Last run 2026-09-25: 209 checks, all green. Run it after ANY change to
+fits. Last run 2026-09-29 (round 30): 209 checks, all green. Run it after ANY change to
 `board/index.html`. A live smoke test against the deployed relay
 (share-create, share-uplink with an ended snapshot, share-end, the
 page on a local static server) is still worth one run before a
-release; it costs one `share-create` against the 10-per-10-minutes
-limit.
+release; it costs one `share-create` against the per-IP limit (30
+per 10 minutes since round 30, 10 before).
