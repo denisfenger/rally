@@ -115,8 +115,11 @@ while the tab is hidden and resumes on `visibilitychange`. The dot
 turns amber after 20 s without a fresh answer. No `?code=` shows the
 entry form, which submits to `board/?code=` so the URL shape the app
 shares stays stable. An X in the header leaves the match for the entry
-form. The page speaks English or German by the browser's language
-(`?lang=de|en` forces one). THE LINK IS NEUTRAL (round 27): no side
+form. The page speaks every launch language, English, German,
+Spanish, French, Italian and Portuguese (round 31 verify; it spoke
+English and German until then), by the browser's language list (the
+primary subtag: pt-BR reads Portuguese), else English; `?lang=` forces
+one. THE LINK IS NEUTRAL (round 27): no side
 choice, the result reads "<names> won"; Swap sides stays. It draws the
 app's Board: tinted tiles in initials, the optic serve ball placed from
 the viewer's side with the serving player's name (the host uploads

@@ -483,17 +483,106 @@
         tabletennis: "Tischtennis", badminton: "Badminton", squash: "Squash",
         volleyball: "Volleyball", beachvolleyball: "Beachvolleyball",
         racquetball: "Racquetball", custom: "Individuell" }
+    },
+    // Round 31 verify: every launch language (decision 10), in the app's
+    // own words where it has them (src/locales: board.live, follow.*,
+    // players.serves, board.swapSides, the team and sport names).
+    es: {
+      live: "En vivo", reconnecting: "Reconectando", final: "Resultado final", ended: "Terminado",
+      teamA: "Equipo A", teamB: "Equipo B",
+      won: "Victoria de {name}", matchEnded: "Fin del partido",
+      sharingEnded: "Ya no se comparte",
+      sharingEndedHint: "El anfitrión dejó de compartir. Este es el último marcador que llegó.",
+      discardedHint: "El anfitrión descartó este partido.",
+      serves: "Saca {name}", pair: "{a} & {b}",
+      swap: "Invertir lados", leave: "Salir del partido", code: "Código {code}",
+      joinTitle: "Seguir un partido en vivo", joinHint: "Escribe el código de 6 dígitos del anfitrión.",
+      joinButton: "Seguir", codeLabel: "Código",
+      errDigits: "El código tiene 6 dígitos.",
+      errNotFound: "No hay partidos en vivo con este código.",
+      errTooMany: "Demasiados intentos. Vuelve a intentarlo en unos minutos.",
+      errNetwork: "No se pudo contactar con el servicio del marcador. Vuelve a intentarlo.",
+      scoredWith: "Anotado con Rally", title: "Marcador en vivo de Rally", sets: "Sets",
+      sports: { padel: "Pádel", tennis: "Tenis", pickleball: "Pickleball",
+        tabletennis: "Tenis de mesa", badminton: "Bádminton", squash: "Squash",
+        volleyball: "Voleibol", beachvolleyball: "Vóley playa",
+        racquetball: "Raquetbol", custom: "Personalizado" }
+    },
+    fr: {
+      live: "En direct", reconnecting: "Reconnexion", final: "Score final", ended: "Terminé",
+      teamA: "Équipe A", teamB: "Équipe B",
+      won: "Victoire de {name}", matchEnded: "Match terminé",
+      sharingEnded: "Partage terminé",
+      sharingEndedHint: "L'hôte a arrêté le partage. C'est le dernier score reçu.",
+      discardedHint: "L'hôte a supprimé ce match.",
+      serves: "{name} sert", pair: "{a} & {b}",
+      swap: "Côtés inversés", leave: "Quitter le match", code: "Code {code}",
+      joinTitle: "Suivre un match en direct", joinHint: "Saisis le code à 6 chiffres de l'hôte.",
+      joinButton: "Suivre", codeLabel: "Code",
+      errDigits: "Le code a 6 chiffres.",
+      errNotFound: "Aucun match en direct avec ce code.",
+      errTooMany: "Trop de tentatives, réessaie dans quelques minutes.",
+      errNetwork: "Impossible de joindre le service de score. Réessaie.",
+      scoredWith: "Compté avec Rally", title: "Score en direct Rally", sets: "Sets",
+      sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
+        tabletennis: "Tennis de table", badminton: "Badminton", squash: "Squash",
+        volleyball: "Volley-ball", beachvolleyball: "Beach-volley",
+        racquetball: "Racquetball", custom: "Personnalisé" }
+    },
+    it: {
+      live: "Live", reconnecting: "Riconnessione", final: "Risultato finale", ended: "Finita",
+      teamA: "Squadra A", teamB: "Squadra B",
+      won: "Vittoria di {name}", matchEnded: "Partita finita",
+      sharingEnded: "Condivisione terminata",
+      sharingEndedHint: "Chi condivideva ha interrotto la condivisione. Questo è l'ultimo punteggio ricevuto.",
+      discardedHint: "Chi condivideva ha scartato questa partita.",
+      serves: "Serve {name}", pair: "{a} & {b}",
+      swap: "Inverti i lati", leave: "Esci dalla partita", code: "Codice {code}",
+      joinTitle: "Segui una partita live", joinHint: "Inserisci il codice a 6 cifre di chi condivide.",
+      joinButton: "Segui", codeLabel: "Codice",
+      errDigits: "Il codice ha 6 cifre.",
+      errNotFound: "Nessuna partita live con questo codice.",
+      errTooMany: "Troppi tentativi, riprova tra qualche minuto.",
+      errNetwork: "Impossibile raggiungere il servizio del punteggio. Riprova.",
+      scoredWith: "Segnato con Rally", title: "Punteggio live di Rally", sets: "Set",
+      sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
+        tabletennis: "Tennistavolo", badminton: "Badminton", squash: "Squash",
+        volleyball: "Pallavolo", beachvolleyball: "Beach volley",
+        racquetball: "Racquetball", custom: "Personalizzato" }
+    },
+    pt: {
+      live: "Ao vivo", reconnecting: "A reconectar", final: "Resultado final", ended: "Terminada",
+      teamA: "Equipa A", teamB: "Equipa B",
+      won: "Vitória de {name}", matchEnded: "Partida terminada",
+      sharingEnded: "Partilha terminada",
+      sharingEndedHint: "O anfitrião parou de partilhar. Este é o último resultado recebido.",
+      discardedHint: "O anfitrião descartou esta partida.",
+      serves: "{name} serve", pair: "{a} & {b}",
+      swap: "Inverter lados", leave: "Sair da partida", code: "Código {code}",
+      joinTitle: "Seguir uma partida ao vivo", joinHint: "Insere o código de 6 dígitos do anfitrião.",
+      joinButton: "Seguir", codeLabel: "Código",
+      errDigits: "O código tem 6 dígitos.",
+      errNotFound: "Nenhuma partida ao vivo com este código.",
+      errTooMany: "Demasiadas tentativas, tenta de novo daqui a alguns minutos.",
+      errNetwork: "Não foi possível contactar o serviço de resultados. Tenta de novo.",
+      scoredWith: "Marcado com o Rally", title: "Resultado ao vivo do Rally", sets: "Sets",
+      sports: { padel: "Padel", tennis: "Ténis", pickleball: "Pickleball",
+        tabletennis: "Ténis de mesa", badminton: "Badminton", squash: "Squash",
+        volleyball: "Voleibol", beachvolleyball: "Voleibol de praia",
+        racquetball: "Raquetebol", custom: "Personalizado" }
     }
   };
   var params = new URLSearchParams(location.search);
+  // ?lang= first, then the browser's languages in order (the primary
+  // subtag: pt-BR reads the one Portuguese table, es-MX the Spanish one),
+  // else English. Round 31 verify: all six launch languages.
   var lang = (function () {
-    var forced = params.get("lang");
-    if (forced === "de" || forced === "en") return forced;
+    var forced = String(params.get("lang") || "").toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(TEXT, forced)) return forced;
     var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"];
     for (var i = 0; i < list.length; i++) {
-      var tag = String(list[i] || "").toLowerCase();
-      if (tag.indexOf("de") === 0) return "de";
-      if (tag.indexOf("en") === 0) return "en";
+      var primary = String(list[i] || "").toLowerCase().split(/[-_]/)[0];
+      if (Object.prototype.hasOwnProperty.call(TEXT, primary)) return primary;
     }
     return "en";
   })();

@@ -165,14 +165,18 @@
       <div class="step reveal">
         <span class="num">03</span>
         <h3>Your phone is the scoreboard</h3>
-        <p>Prop your iPhone or iPad courtside and it mirrors the score as you play, in your view or a neutral one for spectators. No watch at hand? Score on the phone with the same rules.</p>
+        <p>Prop your iPhone courtside and it mirrors the watch's score as you play, in your view or a neutral one for spectators. No watch at hand? Score on your iPhone or iPad with the same rules.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 03 Sports: court night, the eight sports with their default rules.
-     Nothing is selected here: the sport is chosen in the app. -->
+<!-- 03 Sports: court night, the eight sports with their CLUB RULES, the
+     app's own rules lines for a device whose country the region table does
+     not name (round 31, decision 2; scripts/verify-site.mjs holds each line
+     to src/sportCatalog.ts summary()). The presets in the app start from
+     the device's country, which the copy says. Nothing is selected here:
+     the sport is chosen in the app. -->
 <section class="band dark" id="sports">
   <div class="wrap wide">
     <div class="sports-head">
@@ -180,14 +184,14 @@
         <p class="eyebrow">Sports</p>
         <h2>Eight sports. One scorer.</h2>
       </div>
-      <p class="copy">Pick a default sport once and set its rules. Add the others whenever you play them; each keeps its own preset, and every new match starts from your defaults. Custom covers any sport, counted in single points or the tennis way, and you can save it under a name of your own: it gets its place in the sports row, its own rules and its own stats. Change a setting on either device and the other one follows.</p>
+      <p class="copy">Pick a default sport once and set its rules. Add the others whenever you play them; each keeps its own preset, and every new match starts from your defaults. The presets start from the club rules below, adjusted to your country: in the US, for example, a tennis match ends in a 10-point tiebreak and pickleball plays one game. Custom covers any sport, counted in single points or the tennis way, and you can save it under a name of your own: it gets its place in the sports row, its own rules and its own stats. Change a setting on either device and the other one follows.</p>
     </div>
-    <ul class="sports" aria-label="Sports Rally scores, with their default rules">
+    <ul class="sports" aria-label="Sports Rally scores, with their club rules">
       <li class="sport reveal"><span class="idx">01</span><span class="sname">Padel</span><span class="srules">golden point · best of 3</span></li>
-      <li class="sport reveal"><span class="idx">02</span><span class="sname">Tennis</span><span class="srules">singles · best of 3 · full final set · advantage</span></li>
+      <li class="sport reveal"><span class="idx">02</span><span class="sname">Tennis</span><span class="srules">singles · best of 3 · full set · advantage</span></li>
       <li class="sport reveal"><span class="idx">03</span><span class="sname">Pickleball</span><span class="srules">doubles · game to 11 · best of 3 · side-out</span></li>
       <li class="sport reveal"><span class="idx">04</span><span class="sname">Table tennis</span><span class="srules">singles · best of 5</span></li>
-      <li class="sport reveal"><span class="idx">05</span><span class="sname">Badminton</span><span class="srules">singles · 21 points</span></li>
+      <li class="sport reveal"><span class="idx">05</span><span class="sname">Badminton</span><span class="srules">singles · game to 21</span></li>
       <li class="sport reveal"><span class="idx">06</span><span class="sname">Squash</span><span class="srules">best of 5</span></li>
       <li class="sport reveal"><span class="idx">07</span><span class="sname">Volleyball</span><span class="srules">indoor · best of 5</span></li>
       <li class="sport reveal"><span class="idx">08</span><span class="sname">Custom</span><span class="srules">your rules, saved under your name</span></li>
@@ -226,7 +230,7 @@
             </div>
           </div>
           <div class="mini" id="pMini" aria-label="Games by set"></div>
-          <div class="status" id="pStatus"><span class="dot"></span><span id="pStatusText">live · from the watch</span></div>
+          <div class="status" id="pStatus"><span class="dot"></span><span id="pStatusText">Live</span></div>
           <div class="sharestrip" aria-label="Share strip">
             <span class="ss-lbl">Sharing live</span>
             <span class="ss-code">483 912</span>
@@ -284,9 +288,10 @@
       <div class="card plan reveal">
         <h3>Free</h3>
         <ul>
+          <li>5 matches a month, counted across watch and iPhone</li>
           <li>Tap scoring on the watch, all eight sports</li>
-          <li>iPhone and iPad scoreboard, personal or neutral view</li>
-          <li>Scoring on the phone with the same rules</li>
+          <li>iPhone scoreboard, personal or neutral view</li>
+          <li>Scoring on the iPhone or iPad with the same rules</li>
           <li>Workout with heart rate and calories, on the device</li>
           <li>Match history for 30 days</li>
           <li>Following a shared match</li>
@@ -295,8 +300,10 @@
       <div class="card plan pro reveal">
         <h3>Rally Pro</h3>
         <ul>
+          <li>Unlimited matches</li>
           <li>Unlimited match history</li>
           <li>Hosting live shares with a 6-digit code</li>
+          <li>Stats</li>
         </ul>
         <p class="plan-note">Plans and prices are shown in the app.</p>
       </div>
@@ -634,7 +641,7 @@
 
     var mp = matchPoint(s);
     var status = !live ? (s.winner === 0 ? 'match won · us' : 'match won · them')
-      : mp !== null ? 'match point' : s.tb ? 'tiebreak' : 'live · from the watch';
+      : mp !== null ? 'match point' : s.tb ? 'tiebreak' : 'Live';
     $('pStatusText').textContent = status;
     $('pStatus').classList.toggle('off', !live);
 
