@@ -142,7 +142,6 @@ a.brandrow:active { opacity: 0.65; }
   font-weight: 700;
   font-size: 1.4rem;
   letter-spacing: -0.025em;
-  text-transform: lowercase;
   color: var(--ink);
 }
 h1 {
