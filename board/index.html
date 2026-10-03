@@ -248,7 +248,10 @@
   .who { max-width: 100%; font-size: 13px; font-weight: 600;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .points { font-size: clamp(80px, 24vw, 188px); line-height: 1.08;
+  /* Round 32 (decision 15): the side behind at an advantage draws NOTHING
+     (an empty label); min-height keeps its line, so its name stays level
+     with the other tile's. */
+  .points { font-size: clamp(80px, 24vw, 188px); line-height: 1.08; min-height: 1.08em;
     font-weight: 800; letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums; white-space: nowrap; }
   .tile.a .points { color: var(--us); }
@@ -458,6 +461,7 @@
       errTooMany: "Too many attempts. Wait a few minutes and try again.",
       errNetwork: "Could not reach the score service. Try again.",
       scoredWith: "Scored with Rally", title: "Rally live score", sets: "Sets",
+      advantage: "Advantage", secondDeuce: "Second deuce", decidingPoint: "Deciding point",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Table tennis", badminton: "Badminton", squash: "Squash",
         volleyball: "Volleyball", beachvolleyball: "Beach volleyball",
@@ -479,6 +483,7 @@
       errTooMany: "Zu viele Versuche. Warte ein paar Minuten und versuch es noch einmal.",
       errNetwork: "Der Spielstand-Dienst ist nicht erreichbar. Versuch es noch einmal.",
       scoredWith: "Gezählt mit Rally", title: "Rally Live-Spielstand", sets: "Sätze",
+      advantage: "Vorteil", secondDeuce: "Zweiter Einstand", decidingPoint: "Entscheidungspunkt",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Tischtennis", badminton: "Badminton", squash: "Squash",
         volleyball: "Volleyball", beachvolleyball: "Beachvolleyball",
@@ -503,6 +508,7 @@
       errTooMany: "Demasiados intentos. Vuelve a intentarlo en unos minutos.",
       errNetwork: "No se pudo contactar con el servicio del marcador. Vuelve a intentarlo.",
       scoredWith: "Anotado con Rally", title: "Marcador en vivo de Rally", sets: "Sets",
+      advantage: "Ventaja", secondDeuce: "Iguales por segunda vez", decidingPoint: "Punto de oro",
       sports: { padel: "Pádel", tennis: "Tenis", pickleball: "Pickleball",
         tabletennis: "Tenis de mesa", badminton: "Bádminton", squash: "Squash",
         volleyball: "Voleibol", beachvolleyball: "Vóley playa",
@@ -524,6 +530,7 @@
       errTooMany: "Trop de tentatives, réessaie dans quelques minutes.",
       errNetwork: "Impossible de joindre le service de score. Réessaie.",
       scoredWith: "Compté avec Rally", title: "Score en direct Rally", sets: "Sets",
+      advantage: "Avantage", secondDeuce: "Deuxième égalité", decidingPoint: "Point décisif",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Tennis de table", badminton: "Badminton", squash: "Squash",
         volleyball: "Volley-ball", beachvolleyball: "Beach-volley",
@@ -545,6 +552,7 @@
       errTooMany: "Troppi tentativi, riprova tra qualche minuto.",
       errNetwork: "Impossibile raggiungere il servizio del punteggio. Riprova.",
       scoredWith: "Segnato con Rally", title: "Punteggio live di Rally", sets: "Set",
+      advantage: "Vantaggio", secondDeuce: "Seconda parità", decidingPoint: "Killer point",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Tennistavolo", badminton: "Badminton", squash: "Squash",
         volleyball: "Pallavolo", beachvolleyball: "Beach volley",
@@ -566,6 +574,7 @@
       errTooMany: "Demasiadas tentativas, tenta de novo daqui a alguns minutos.",
       errNetwork: "Não foi possível contactar o serviço de resultados. Tenta de novo.",
       scoredWith: "Marcado com o Rally", title: "Resultado ao vivo do Rally", sets: "Sets",
+      advantage: "Vantagem", secondDeuce: "Iguais pela segunda vez", decidingPoint: "Ponto decisivo",
       sports: { padel: "Padel", tennis: "Ténis", pickleball: "Pickleball",
         tabletennis: "Ténis de mesa", badminton: "Badminton", squash: "Squash",
         volleyball: "Voleibol", beachvolleyball: "Voleibol de praia",
@@ -1018,14 +1027,28 @@
   // Round 27 review: the screen reader hears the SCORE once per change
   // ("D & J 30, T & A 15"), not the whole board again; the result and the
   // end are announced by their banner line.
+  // Round 32 (decision 15): words for the official display past deuce
+  // (src/pointWords.ts is the app's rule): AD the advantage, D2 the second
+  // deuce, SP the deciding point (the page holds no rules to name it by),
+  // and the side's name alone for the empty label of the side behind.
+  function spoken(label) {
+    if (label === "AD") return T.advantage;
+    if (label === "D2") return T.secondDeuce;
+    if (label === "SP") return T.decidingPoint;
+    return label;
+  }
+  function sideSpoken(s) {
+    var points = el("points" + s).textContent;
+    var name = el("name" + s).textContent;
+    return points === "" ? name : name + " " + spoken(points);
+  }
   var lastAnnounced = "";
   function announce() {
     var text;
     if (el("banner").classList.contains("show")) {
       text = el("bannerTitle").textContent;
     } else {
-      text = el("nameA").textContent + " " + el("pointsA").textContent + ", " +
-        el("nameB").textContent + " " + el("pointsB").textContent;
+      text = sideSpoken("A") + ", " + sideSpoken("B");
     }
     if (text === lastAnnounced) return;
     lastAnnounced = text;

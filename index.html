@@ -35,7 +35,10 @@
      of three, tiebreak at 6-6, serve alternating per game and one-then-two
      in the tiebreak (packages/engine, padel preset).
      THE DECIDING-POINT CARD (feedback round 28, STYLE_GUIDE "The
-     deciding-point card", targets/watch/DecidingPointCard.swift): at 40:40
+     deciding-point card", targets/watch/DecidingPointCard.swift): the demo
+     plays with the Side choice row turned ON (feedback round 32, decision
+     5: in the app it is a setting under the deuce option, off by default,
+     so the rules line says "side choice on" while it applies). At 40:40
      with golden point the receivers pick the side, so an opaque card lies
      over the tiles (never over the undo row) until it is answered. It asks
      from the wearer's own position ("Which side do you receive on?" when
@@ -131,7 +134,7 @@
           <div class="strap bottom" aria-hidden="true"></div>
         </div>
         <div class="demo-foot">
-          <p class="rulesline" id="wRules">padel · golden point · best of 3</p>
+          <p class="rulesline" id="wRules">padel · golden point · side choice on · best of 3</p>
           <div class="seg" role="group" aria-label="Deuce rule for the demo">
             <button class="seg-btn is-on" type="button" data-deuce="golden" aria-pressed="true">Golden point</button>
             <button class="seg-btn" type="button" data-deuce="advantage" aria-pressed="false">Advantage</button>
@@ -187,13 +190,13 @@
       <p class="copy">Pick a default sport once and set its rules. Add the others whenever you play them; each keeps its own preset, and every new match starts from your defaults. The presets start from the club rules below, adjusted to your country: in the US, for example, a tennis match ends in a 10-point tiebreak and pickleball plays one game. Custom covers any sport, counted in single points or the tennis way, and you can save it under a name of your own: it gets its place in the sports row, its own rules and its own stats. Change a setting on either device and the other one follows.</p>
     </div>
     <ul class="sports" aria-label="Sports Rally scores, with their club rules">
-      <li class="sport reveal"><span class="idx">01</span><span class="sname">Padel</span><span class="srules">golden point · best of 3</span></li>
+      <li class="sport reveal"><span class="idx">01</span><span class="sname">Padel</span><span class="srules">doubles · golden point · best of 3</span></li>
       <li class="sport reveal"><span class="idx">02</span><span class="sname">Tennis</span><span class="srules">singles · best of 3 · full set · advantage</span></li>
       <li class="sport reveal"><span class="idx">03</span><span class="sname">Pickleball</span><span class="srules">doubles · game to 11 · best of 3 · side-out</span></li>
       <li class="sport reveal"><span class="idx">04</span><span class="sname">Table tennis</span><span class="srules">singles · best of 5</span></li>
-      <li class="sport reveal"><span class="idx">05</span><span class="sname">Badminton</span><span class="srules">singles · game to 21</span></li>
+      <li class="sport reveal"><span class="idx">05</span><span class="sname">Badminton</span><span class="srules">singles · game to 21 · best of 3</span></li>
       <li class="sport reveal"><span class="idx">06</span><span class="sname">Squash</span><span class="srules">best of 5</span></li>
-      <li class="sport reveal"><span class="idx">07</span><span class="sname">Volleyball</span><span class="srules">indoor · best of 5</span></li>
+      <li class="sport reveal"><span class="idx">07</span><span class="sname">Volleyball</span><span class="srules">indoor · best of 5 · set to 25</span></li>
       <li class="sport reveal"><span class="idx">08</span><span class="sname">Custom</span><span class="srules">your rules, saved under your name</span></li>
     </ul>
   </div>
@@ -216,7 +219,7 @@
         <div class="screen">
           <div class="island" aria-hidden="true"></div>
           <div class="ptop" aria-hidden="true"><span class="ptime">9:41</span></div>
-          <p class="psport" id="pRules">Padel · golden point · best of 3</p>
+          <p class="psport" id="pRules">Padel · golden point · side choice on · best of 3</p>
           <div class="ptiles">
             <div class="ptile us" id="pA" role="button" tabindex="0" aria-label="Point for us">
               <span class="lbl">Us</span>
@@ -487,11 +490,14 @@
     reset();
   }
 
-  // packages/engine/src/labels.ts
+  // packages/engine/src/labels.ts. Round 32 (decision 15), the official
+  // display: an advantage reads AD for the side ahead and NOTHING for the
+  // other; the demo plays golden point and advantage, so every deuce reads
+  // 40:40 (no D2 or SP here).
   function tennisLabel(p, o) {
     if (p >= 3 && o >= 3) {
       if (p === o) return '40';
-      return p > o ? 'Ad' : '40';
+      return p > o ? 'AD' : '';
     }
     return LADDER[Math.min(p, 3)];
   }
@@ -547,8 +553,11 @@
     el.classList.add('pop');
   }
 
+  // Round 32 (decision 5): the demo's golden point plays with Side choice
+  // on (the card below), which the app's rules line names only when on;
+  // advantage has no deciding point, so the row and its words are gone.
   function rulesText(capital) {
-    return (capital ? 'Padel' : 'padel') + ' · ' + (deuce === 'golden' ? 'golden point' : 'advantage') + ' · best of 3';
+    return (capital ? 'Padel' : 'padel') + ' · ' + (deuce === 'golden' ? 'golden point · side choice on' : 'advantage') + ' · best of 3';
   }
 
   // The deciding-point card (round 28): up while the receivers' side is

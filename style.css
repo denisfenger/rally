@@ -431,10 +431,14 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
   color: var(--d-ink-soft);
   line-height: 1;
 }
+/* Round 32 (decision 15): the side behind at an advantage draws NOTHING
+   (an empty label); min-height keeps its line, so its label stays level
+   with the other tile's (in the phone mockup too). */
 .tile .num {
   font-size: 44px;
   font-weight: 800;
   line-height: 1;
+  min-height: 1em;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -666,6 +670,7 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
   font-size: 64px;
   font-weight: 800;
   line-height: 1.05;
+  min-height: 1.05em;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
 }
