@@ -154,8 +154,11 @@ h1 {
   font-size: clamp(2.1rem, 5.5vw, 3.4rem);
   text-wrap: balance;
 }
+/* Sized for the hero's "Keep score on your Apple Watch." (Denis
+   2026-10-14, the plain promise instead of "One tap per point."): "Apple
+   Watch." never breaks, so at 320 px it has to fit the column whole. */
 h1.display {
-  font-size: clamp(3.4rem, 8.5vw, 5.8rem);
+  font-size: clamp(2.5rem, 7.2vw, 4.8rem);
   letter-spacing: -0.045em;
   line-height: 0.96;
 }
@@ -187,7 +190,6 @@ h3 { font-size: 1.15rem; margin: 0.2rem 0 0.5rem; letter-spacing: -0.015em; }
 .lead .them { color: var(--them-ink); font-weight: 600; }
 .copy { color: var(--ink-soft); max-width: 36em; font-size: 1.05rem; }
 .copy strong { color: var(--ink); font-weight: 600; }
-.note { font-size: 0.92rem; color: var(--ink-faint); margin: 1.2rem 0 0; max-width: 34em; }
 
 /* ── Calls to action ─────────────────────────────────────────────────── */
 .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem 1.5rem; margin-top: 2.2rem; }
@@ -253,6 +255,71 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 }
 .topbar .links a:hover { color: var(--ink); border-bottom-color: var(--ink-faint); }
 .topbar .links a:active { opacity: 0.7; }
+/* The phone menu (below 640 px): a 44 px button at the top right with three
+   bars that cross into an X while the panel is open; the links drop into a
+   panel under it, right-aligned to the bar. Above 640 px the button is gone
+   and the links sit in the bar as before. */
+.menubtn {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+}
+.menubtn:hover { background: var(--us-chip); }
+.menubtn:active { opacity: 0.7; }
+.menubtn .bars,
+.menubtn .bars::before,
+.menubtn .bars::after {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.menubtn .bars { position: relative; }
+.menubtn .bars::before,
+.menubtn .bars::after { content: ""; position: absolute; left: 0; }
+.menubtn .bars::before { top: -7px; }
+.menubtn .bars::after { top: 7px; }
+.menubtn[aria-expanded="true"] .bars { background: transparent; }
+.menubtn[aria-expanded="true"] .bars::before { top: 0; transform: rotate(45deg); }
+.menubtn[aria-expanded="true"] .bars::after { top: 0; transform: rotate(-45deg); }
+@media (max-width: 640px) {
+  .topbar { position: relative; flex-wrap: nowrap; }
+  .menubtn { display: inline-flex; }
+  .topbar .links {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 20;
+    flex-direction: column;
+    gap: 0;
+    min-width: 13.5rem;
+    padding: 0.45rem;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    font-size: 1.05rem;
+  }
+  .topbar.open .links { display: flex; }
+  .topbar .links a {
+    padding: 0.75rem 0.9rem;
+    border-bottom: 0;
+    border-radius: 10px;
+    color: var(--ink);
+  }
+  .topbar .links a:hover { background: var(--us-chip); }
+}
 
 /* ── Hero ────────────────────────────────────────────────────────────── */
 .hero {
@@ -287,8 +354,6 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 }
 .hero-grid { gap: clamp(2.5rem, 6vw, 5rem); }
 .hero-copy .eyebrow { color: var(--us); }
-/* Room for the badge's hover ring (16 px out) above the line below. */
-.hero-copy .note { margin-top: 1.5rem; }
 .sportstrip {
   display: flex;
   flex-wrap: wrap;
@@ -840,7 +905,16 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
   font-variant-numeric: tabular-nums;
 }
 .sport .sname { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
-.sport .srules { display: block; margin-top: 0.45rem; font-size: 0.86rem; color: var(--ink-faint); line-height: 1.4; }
+.sport .sopts {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
 @media (max-width: 1000px) { .sports { grid-template-columns: repeat(2, 1fr); } }
 
 /* ── Followers row, plans ────────────────────────────────────────────── */

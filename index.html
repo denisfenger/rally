@@ -62,7 +62,12 @@
         <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg>
         <span class="n">Rally</span>
       </a>
-      <div class="links">
+      <!-- On phones (below 640 px) the links fold behind this button at the
+           top right and open as a panel under it (Denis 2026-10-14: the
+           links wrapping under the logo looked off); above that width the
+           button is hidden and the links sit in the bar. -->
+      <button class="menubtn" id="menuBtn" type="button" aria-expanded="false" aria-controls="siteMenu" aria-label="Menu"><span class="bars" aria-hidden="true"></span></button>
+      <div class="links" id="siteMenu">
         <a href="#how">How it works</a>
         <a href="#sports">Sports</a>
         <a href="#share">Live sharing</a>
@@ -73,8 +78,8 @@
     <div class="split hero-grid">
       <div class="hero-copy">
         <p class="eyebrow">Apple Watch · iPhone · iPad</p>
-        <h1 class="display">One tap<br>per point.</h1>
-        <p class="lead">Rally scores padel, tennis, pickleball, table tennis, badminton, squash and volleyball from your wrist. Tap <span class="us">your side</span> or <span class="them">theirs</span>; games, sets, serves and side switches take care of themselves, and the match counts as a workout.</p>
+        <h1 class="display">Keep score on your Apple&nbsp;Watch.</h1>
+        <p class="lead">One tap per point for padel, tennis, pickleball, table tennis, badminton, squash and volleyball. Tap <span class="us">your side</span> or <span class="them">theirs</span>; games, sets, serves and side switches take care of themselves, and the match counts as a workout.</p>
         <div class="cta">
           <!-- Apple's "Download on the App Store" badge, en-us black, the file
                from Apple's marketing tools as served (app-store-badge.svg,
@@ -86,7 +91,6 @@
           <a class="appstore" href="https://apps.apple.com/app/id6807145117"><img src="app-store-badge.svg" width="168" height="56" alt="Download on the App Store"></a>
           <a class="quiet" href="board/">Watching a shared match? Enter your code</a>
         </div>
-        <p class="note">No account needed to play. Following a shared match is always free.</p>
       </div>
 
       <div class="demo">
@@ -177,12 +181,15 @@
   </div>
 </section>
 
-<!-- 03 Sports: court night, the eight sports with their CLUB RULES, the
-     app's own rules lines for a device whose country the region table does
-     not name (round 31, decision 2; scripts/verify-site.mjs holds each line
-     to src/sportCatalog.ts summary()). The presets in the app start from
-     the device's country, which the copy says. Nothing is selected here:
-     the sport is chosen in the app. -->
+<!-- 03 Sports: court night, the eight sports with their RULE CHOICES
+     (Denis 2026-10-14: the cards showed only each preset, which read as
+     "best of 5 only, singles only"). Each line names a setting's options in
+     the app's own English labels (src/locales/en.ts, "TB" written out as
+     tiebreak); scripts/verify-site.mjs holds every option of every chip a
+     sport always shows (src/sportCatalog.ts SPORTS) to its card, so a new
+     option in the app fails the check until the card names it. The presets
+     start from the device's country, which the copy says. Nothing is
+     selected here: the sport is chosen in the app. -->
 <section class="band dark" id="sports">
   <div class="wrap wide">
     <div class="sports-head">
@@ -190,17 +197,17 @@
         <p class="eyebrow">Sports</p>
         <h2>Eight sports. One scorer.</h2>
       </div>
-      <p class="copy">Pick a default sport once and set its rules. Add the others whenever you play them; each keeps its own preset, and every new match starts from your defaults. The presets start from the club rules below, adjusted to your country: in the US, for example, a tennis match ends in a 10-point tiebreak and pickleball plays one game. Custom covers any sport, counted in single points or the tennis way, and you can save it under a name of your own: it gets its place in the sports row, its own rules and its own stats. Change a setting on either device and the other one follows.</p>
+      <p class="copy">Pick a default sport once and set its rules. Add the others whenever you play them; each keeps its own preset, and every new match starts from your defaults. Each sport offers the choices below, and its preset starts from the club rules, adjusted to your country: in the US, for example, a tennis match ends in a 10-point tiebreak and pickleball plays one game. Custom covers any sport, counted in single points or the tennis way, and you can save it under a name of your own: it gets its place in the sports row, its own rules and its own stats. Change a setting on either device and the other one follows.</p>
     </div>
-    <ul class="sports" aria-label="Sports Rally scores, with their club rules">
-      <li class="sport reveal"><span class="idx">01</span><span class="sname">Padel</span><span class="srules">doubles · golden point · best of 3</span></li>
-      <li class="sport reveal"><span class="idx">02</span><span class="sname">Tennis</span><span class="srules">singles · best of 3 · full set · advantage</span></li>
-      <li class="sport reveal"><span class="idx">03</span><span class="sname">Pickleball</span><span class="srules">doubles · game to 11 · best of 3 · side-out</span></li>
-      <li class="sport reveal"><span class="idx">04</span><span class="sname">Table tennis</span><span class="srules">singles · best of 5</span></li>
-      <li class="sport reveal"><span class="idx">05</span><span class="sname">Badminton</span><span class="srules">singles · game to 21 · best of 3</span></li>
-      <li class="sport reveal"><span class="idx">06</span><span class="sname">Squash</span><span class="srules">best of 5</span></li>
-      <li class="sport reveal"><span class="idx">07</span><span class="sname">Volleyball</span><span class="srules">indoor · best of 5 · set to 25</span></li>
-      <li class="sport reveal"><span class="idx">08</span><span class="sname">Custom</span><span class="srules">your rules, saved under your name</span></li>
+    <ul class="sports" aria-label="Sports Rally scores, with their rule choices">
+      <li class="sport reveal"><span class="idx">01</span><span class="sname">Padel</span><ul class="sopts"><li>Singles or doubles</li><li>Golden point, advantage, star point or silver point</li><li>Best&nbsp;of&nbsp;3, 1&nbsp;set, 2&nbsp;sets + super tiebreak or best&nbsp;of&nbsp;5</li></ul></li>
+      <li class="sport reveal"><span class="idx">02</span><span class="sname">Tennis</span><ul class="sopts"><li>Singles or doubles</li><li>1&nbsp;set, best&nbsp;of&nbsp;3 or best&nbsp;of&nbsp;5</li><li>Final set: full set or 10-point tiebreak</li><li>Advantage or no-ad</li></ul></li>
+      <li class="sport reveal"><span class="idx">03</span><span class="sname">Pickleball</span><ul class="sopts"><li>Singles or doubles</li><li>Games to 11, 15 or&nbsp;21</li><li>1&nbsp;game or best&nbsp;of&nbsp;3</li><li>Side-out or rally scoring</li></ul></li>
+      <li class="sport reveal"><span class="idx">04</span><span class="sname">Table tennis</span><ul class="sopts"><li>Singles or doubles</li><li>1&nbsp;game, best&nbsp;of&nbsp;3, best&nbsp;of&nbsp;5 or best&nbsp;of&nbsp;7</li></ul></li>
+      <li class="sport reveal"><span class="idx">05</span><span class="sname">Badminton</span><ul class="sopts"><li>Singles or doubles</li><li>Games to 21 or&nbsp;15</li><li>1&nbsp;game or best&nbsp;of&nbsp;3</li></ul></li>
+      <li class="sport reveal"><span class="idx">06</span><span class="sname">Squash</span><ul class="sopts"><li>Best&nbsp;of&nbsp;3 or best&nbsp;of&nbsp;5</li></ul></li>
+      <li class="sport reveal"><span class="idx">07</span><span class="sname">Volleyball</span><ul class="sopts"><li>Indoor or beach</li><li>1&nbsp;set, best&nbsp;of&nbsp;3 or best&nbsp;of&nbsp;5</li><li>Sets to 25, 21 or&nbsp;15</li></ul></li>
+      <li class="sport reveal"><span class="idx">08</span><span class="sname">Custom</span><ul class="sopts"><li>Singles or doubles</li><li>Single points or tennis scoring, with your own numbers</li><li>Saved under a name of your own</li></ul></li>
     </ul>
   </div>
 </section>
@@ -744,6 +751,29 @@
     armMs: CARD_ARM_MS
   };
   render();
+})();
+
+// The phone menu (below 640 px, style.css .menubtn): the button opens and
+// closes the links panel; a chosen link, Escape or a click outside the bar
+// closes it.
+(function () {
+  'use strict';
+  var bar = document.querySelector('.topbar');
+  var btn = document.getElementById('menuBtn');
+  if (!bar || !btn) return;
+  function setOpen(open) {
+    bar.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  btn.addEventListener('click', function () { setOpen(!bar.classList.contains('open')); });
+  var links = bar.querySelectorAll('.links a');
+  for (var i = 0; i < links.length; i++) links[i].addEventListener('click', function () { setOpen(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && bar.classList.contains('open')) { setOpen(false); btn.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (bar.classList.contains('open') && !bar.contains(e.target)) setOpen(false);
+  });
 })();
 </script>
 
