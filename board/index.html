@@ -52,10 +52,15 @@
      speaks English or German by the browser's language; ?lang=de|en
      overrides it (the verifier uses that).
      AN X LEAVES (decision 5): back to the code entry, nothing kept.
-     THE FOOTER LINK (release day): "Scored with Rally" opens the App Store
-     listing (apps.apple.com/app/id6807145117) in a new tab, so a follower
-     reaches the app without leaving the live score. It is a link, not a
-     request: nothing loads from Apple until someone taps it.
+     THE LOCKUP (Denis, 2026-10-14): the full logo, the court-sides mark
+     with the "Rally" wordmark in Archivo 700 at -0.025em (brand/BRAND.md,
+     the proportions of brand/render-lockups.mjs), tops the code entry and
+     links to the landing page (../). Its font is an Archivo subset holding
+     only R, a, l and y, inlined as a data URI (1.2 KB, OFL), so the page
+     still makes no request. While a match is followed, the sport's name
+     takes the centre. The small mark over the title and the "Scored with
+     Rally" App Store footer are gone; the landing carries the App Store
+     badge.
      The anon key is public by design: it grants nothing, the table is
      service-role-only and every mutation goes through edge functions.
      The app links here through boardUrl() in src/links.ts; the URL shape is
@@ -89,6 +94,8 @@
     --stale: #B8860B;
     --on-accent: #FFFFFF;
     --track: #E4EBF1;
+    /* BRAND.md rule 2: the wordmark's ink on light grounds, chalk on dark. */
+    --wordmark: #16232E;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -111,6 +118,7 @@
          ground's ink reads 6.8:1. */
       --on-accent: #0B1622;
       --track: #16283A;
+      --wordmark: #E9F0F6;
     }
   }
   * { box-sizing: border-box; }
@@ -127,6 +135,40 @@
     -webkit-font-smoothing: antialiased;
   }
   button { font: inherit; }
+
+  /* The lockup (brand/BRAND.md; brand/render-lockups.mjs geometry): the
+     mark's halves are --m tall, the wordmark is 1.412 x --m with its
+     baseline on the mark's bottom edge and its origin 0.659 x --m to the
+     right of the mark. The font holds only the four letters of "Rally". */
+  @font-face {
+    font-family: "Rally Wordmark";
+    font-style: normal;
+    font-weight: 700;
+    font-display: block;
+    src: url(data:font/woff2;base64,d09GMgABAAAAAATQABAAAAAACJAAAARzAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhYbgRocWgZgP1NUQVRaAFQRCAqEPINaCxAAATYCJAMcBCAFhFAHIAwHGwYHyAQeeDyr95N0kBRDpCt06AUHRAcLqDlIvT0Bg4PZ/P/3jttAE9cD8P79rbda9v443hiTEo03Z51oDc4sCgPGluFVF7gLtQjACi8kBEMtzj2gModUpBWrSmuxu7s2j6EUSp3wX1Ex0rdxjIBAtjwKEgGiFBXTOc2qc1mChKUD+3eENvM38zcw/8AmCTzoRuVoxKDWzqogJMH9AAVB2dNZZtGHQayuK9FRoYVhSnjWPd7jloNePGBIyGYUqUp6CKZbekjysFOozeJ9UvkHPXoFTpuV6N8KMNzrVJSVr+UKdHbIY6YLlFJxkY44ezuFXbqFUnXkCXAAViGMPbQEaVvv5kEhYNvA4GbmsBja3OUWMUjMIgI/ZEGVROykQbBQQw+QHkrmJRFJ76nFGRQKs2EoFJ8qnMY+BZ1qunCzYy9GE3vML8xbzSvN802jy4heLRCmiYNQf4fbb4nhHv5JE6oQYoEY2sP/KIosy7JDTbUrCYs1i03pttXXNtT3ybWuBqtmsRlTU+yfXNOk1qvImvGmOHDLA6pa53nmhSfEgZmZGU0cuOwB1XPXDaCed0AcmJnRjKkp2O/VNM65S/U8cGOMesNzkw3GgydvFcIz+RL7vXdrFk2p8zwTITTjwVtj27W6C6+8Mlo7//LLL49s0BovmXxtssszPS2Ett97t2a8eKcQ6g0PPad6poWsSfsv9V6rGS/eKWRN2j85OVn60G8PXZ1S6/U9+7rX5/Wd/r/P63vP66ul9Jbtpb0ZKZ1Fy/P6PUbItdv/fvSfiVeXRiQlNJ+b+CovaDEnC1VXVtLqxgW7HOvnR3683Ok8PcBhPaYE+ruylvXNXrG2e2762uwfQ4ptzpZzLkqIf+yDOn/FURysDMbd9l5gVHx2g322HhIdT/GbxpsYD85Vu9oLordO9r5sO7vpl8pP/lhhKTj3+msK1v16yh2/fTuvNHeVzvwHV/Q4M5al2o+HNQ5HLco/sdBlifjkzjmV7fU9y43F0XfU/x3mdD09x3HKVOGsluK89gQAEIDEsqtFSGSHI//3AFn+CuDd/+NuB3gvuyjYDPMNW5YpqxH4IQEgQB674VtZ+s2w/52WZXfmPfCXDEqldyiVVuAUGsXSbBRpgrU8dWer/RnBn9X3ZUwPJhU7t9zgpBLI6TfwT4QEdr6DP4Z/hpGMi3uQQhSXIQsxHEZ+ROH220knm4i7zJdgJFCZNRUwdJ2IxEoENsRYVBzLnoJqxhmlizHWsvk9dQ/RQznjbCza5aaBIXrZzCDBfRwewKA8spnNTJBLEklsooeNDHF4s4xdOIBVN64BDg2QRAWrKKWEjfRwrw2xlXGWsoxx3PRSTx8bm39rnDF0UnGRTDIprE0fqfy0PCooo5y15A0d9iZU4eWsOsEOyMH1wKQ02dpep5ZB+tAnF5Vs5LLD9NHTWC1hy07AKoub0FmwK3wTpw4wVCm20C3Tnr2G3fi1UcYYopstbGIptexggj6SJqMLf0RJmGe6WYJeeZ8wj9ymnAoAAAA=) format("woff2");
+  }
+  .brand {
+    --m: 24px;
+    display: inline-flex;
+    align-items: baseline;
+    gap: calc(var(--m) * 0.659);
+    color: var(--wordmark);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: opacity 0.15s ease;
+  }
+  .brand:hover { opacity: 0.82; }
+  .brand:active { opacity: 0.65; }
+  .brand-mark { display: block; flex: none; width: calc(var(--m) * 64 / 68); height: var(--m); }
+  .brand-mark .m-us { fill: var(--us); }
+  .brand-mark .m-them { fill: var(--them); }
+  .brand-word {
+    font-family: "Rally Wordmark", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    font-size: calc(var(--m) * 1.412);
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
 
   /* Header: the X (left), the sport (center), the connection (right). */
   header {
@@ -163,6 +205,9 @@
     visibility: hidden; white-space: nowrap;
   }
   body.following #status { visibility: visible; }
+  /* The code entry shows the lockup in the centre, a followed match its sport. */
+  body:not(.following) #sport { display: none; }
+  body.following .brand { display: none; }
   #dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
     background: var(--fresh); }
   #dot.stale { background: var(--stale); }
@@ -190,9 +235,6 @@
     padding-bottom: 8vh;
   }
   #joinForm.show { display: flex; }
-  .mark { display: flex; gap: 5px; margin-bottom: 6px; }
-  .mark span { width: 18px; height: 34px; border-radius: 7px; background: var(--us); }
-  .mark span + span { background: var(--them); }
   #joinForm h1 { margin: 0; font-size: 28px; line-height: 34px; font-weight: 700;
     letter-spacing: -0.02em; }
   #joinHint { margin: 0; color: var(--ink-soft); font-size: 16px; max-width: 26em; }
@@ -312,10 +354,6 @@
   #codeLabel { font-size: 14px; color: var(--ink-faint);
     font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 
-  footer { text-align: center; padding: 6px 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
-  footer a { color: var(--ink-faint); font-size: 13px; text-decoration: none; }
-  footer a:hover { color: var(--ink-soft); text-decoration: underline; }
-
   /* Wide screens (a laptop, a TV courtside; feedback round 27, second
      pass): the current score stays the focus, and everything around it
      grows WITH the screen instead of staying phone-sized, so the page
@@ -354,10 +392,10 @@
       border-radius: 999px; font-size: clamp(15px, 0.7vw + 8px, 26px); gap: clamp(8px, 0.6vw, 14px); }
     #swap svg { width: clamp(18px, 1vw + 6px, 32px); height: clamp(18px, 1vw + 6px, 32px); }
     #codeLabel { font-size: clamp(14px, 0.7vw + 8px, 26px); }
-    footer a { font-size: clamp(13px, 0.4vw + 8px, 18px); }
+    .brand { --m: clamp(24px, 1vw + 14px, 40px); }
   }
   /* Short landscape phones: everything fits one screen; the tiles give
-     up height first and the footer steps aside. */
+     up height first. */
   @media (max-height: 460px) {
     header { padding-top: calc(4px + env(safe-area-inset-top, 0px)); padding-bottom: 2px; }
     main { padding-top: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
@@ -377,13 +415,14 @@
     #sets { min-height: 44px; }
     .set b { font-size: 20px; line-height: 23px; }
     #swap { min-height: 40px; }
-    footer { display: none; }
+    .brand { --m: 20px; }
   }
 </style>
 </head>
 <body>
 <header>
   <div id="status"><span id="dot"></span><span id="statusText"></span></div>
+  <a class="brand" id="brand" href="../"><svg class="brand-mark" viewBox="16 14 64 68" aria-hidden="true" focusable="false"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg><span class="brand-word">Rally</span></a>
   <div id="sport">Rally</div>
   <button type="button" id="leave" aria-label="Leave match" title="Leave match">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -391,7 +430,6 @@
 </header>
 <main>
   <form id="joinForm" novalidate>
-    <div class="mark" aria-hidden="true"><span></span><span></span></div>
     <h1 id="joinTitle">Follow a live match</h1>
     <p id="joinHint">Enter the 6-digit code from the host.</p>
     <input id="codeInput" inputmode="numeric" autocomplete="one-time-code"
@@ -427,7 +465,6 @@
     </div>
   </section>
 </main>
-<footer><a href="https://apps.apple.com/app/id6807145117" id="scoredWith" target="_blank" rel="noopener">Scored with Rally</a></footer>
 <script>
 (function () {
   var SUPABASE_URL = "https://cdfssiiyuvdxsfgkjdxz.supabase.co";
@@ -463,7 +500,7 @@
       errNotFound: "No live match with that code.",
       errTooMany: "Too many attempts. Wait a few minutes and try again.",
       errNetwork: "Could not reach the score service. Try again.",
-      scoredWith: "Scored with Rally", title: "Rally live score", sets: "Sets",
+      title: "Rally live score", sets: "Sets",
       advantage: "Advantage", secondDeuce: "Second deuce", decidingPoint: "Deciding point",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Table tennis", badminton: "Badminton", squash: "Squash",
@@ -485,7 +522,7 @@
       errNotFound: "Kein laufendes Match mit diesem Code.",
       errTooMany: "Zu viele Versuche. Warte ein paar Minuten und versuch es noch einmal.",
       errNetwork: "Der Spielstand-Dienst ist nicht erreichbar. Versuch es noch einmal.",
-      scoredWith: "Gezählt mit Rally", title: "Rally Live-Spielstand", sets: "Sätze",
+      title: "Rally Live-Spielstand", sets: "Sätze",
       advantage: "Vorteil", secondDeuce: "Zweiter Einstand", decidingPoint: "Entscheidungspunkt",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Tischtennis", badminton: "Badminton", squash: "Squash",
@@ -510,7 +547,7 @@
       errNotFound: "No hay partidos en vivo con este código.",
       errTooMany: "Demasiados intentos. Vuelve a intentarlo en unos minutos.",
       errNetwork: "No se pudo contactar con el servicio del marcador. Vuelve a intentarlo.",
-      scoredWith: "Anotado con Rally", title: "Marcador en vivo de Rally", sets: "Sets",
+      title: "Marcador en vivo de Rally", sets: "Sets",
       advantage: "Ventaja", secondDeuce: "Iguales por segunda vez", decidingPoint: "Punto de oro",
       sports: { padel: "Pádel", tennis: "Tenis", pickleball: "Pickleball",
         tabletennis: "Tenis de mesa", badminton: "Bádminton", squash: "Squash",
@@ -532,7 +569,7 @@
       errNotFound: "Aucun match en direct avec ce code.",
       errTooMany: "Trop de tentatives, réessaie dans quelques minutes.",
       errNetwork: "Impossible de joindre le service de score. Réessaie.",
-      scoredWith: "Compté avec Rally", title: "Score en direct Rally", sets: "Sets",
+      title: "Score en direct Rally", sets: "Sets",
       advantage: "Avantage", secondDeuce: "Deuxième égalité", decidingPoint: "Point décisif",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Tennis de table", badminton: "Badminton", squash: "Squash",
@@ -554,7 +591,7 @@
       errNotFound: "Nessuna partita live con questo codice.",
       errTooMany: "Troppi tentativi, riprova tra qualche minuto.",
       errNetwork: "Impossibile raggiungere il servizio del punteggio. Riprova.",
-      scoredWith: "Segnato con Rally", title: "Punteggio live di Rally", sets: "Set",
+      title: "Punteggio live di Rally", sets: "Set",
       advantage: "Vantaggio", secondDeuce: "Seconda parità", decidingPoint: "Killer point",
       sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
         tabletennis: "Tennistavolo", badminton: "Badminton", squash: "Squash",
@@ -576,7 +613,7 @@
       errNotFound: "Nenhuma partida ao vivo com este código.",
       errTooMany: "Demasiadas tentativas, tenta de novo daqui a alguns minutos.",
       errNetwork: "Não foi possível contactar o serviço de resultados. Tenta de novo.",
-      scoredWith: "Marcado com o Rally", title: "Resultado ao vivo do Rally", sets: "Sets",
+      title: "Resultado ao vivo do Rally", sets: "Sets",
       advantage: "Vantagem", secondDeuce: "Iguais pela segunda vez", decidingPoint: "Ponto decisivo",
       sports: { padel: "Padel", tennis: "Ténis", pickleball: "Pickleball",
         tabletennis: "Ténis de mesa", badminton: "Badminton", squash: "Squash",
@@ -645,7 +682,6 @@
     el("leave").setAttribute("title", T.leave);
     el("swapLabel").textContent = T.swap;
     el("sets").setAttribute("aria-label", T.sets);
-    el("scoredWith").textContent = T.scoredWith;
   }
 
   function showForm(message) {
