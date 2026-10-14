@@ -53,14 +53,16 @@
      overrides it (the verifier uses that).
      AN X LEAVES (decision 5): back to the code entry, nothing kept.
      THE LOCKUP (Denis, 2026-10-14): the full logo, the court-sides mark
-     with the "Rally" wordmark in Archivo 700 at -0.025em (brand/BRAND.md,
-     the proportions of brand/render-lockups.mjs), tops the code entry and
-     links to the landing page (../). Its font is an Archivo subset holding
-     only R, a, l and y, inlined as a data URI (1.2 KB, OFL), so the page
-     still makes no request. While a match is followed, the sport's name
-     takes the centre. The small mark over the title and the "Scored with
-     Rally" App Store footer are gone; the landing carries the App Store
-     badge.
+     with the "Rally" wordmark in Archivo 700, sits above the code entry's
+     headline, centred with it, and links to the landing page (../). It is
+     the site's one lockup (site/style.css's brandrow, the same markup and a
+     copy of its rules: the word's cap height 0.618 x the mark's height,
+     centred on it); its font is an Archivo subset of R, a, l and y inlined
+     as a data URI (1.2 KB, OFL), so the page still makes no request. The
+     code entry shows no header: its status, sport and X belong to a followed
+     match, where the sport's name takes the centre. The small mark over the
+     title and the "Scored with Rally" App Store footer are gone; the landing
+     carries the App Store badge.
      The anon key is public by design: it grants nothing, the table is
      service-role-only and every mutation goes through edge functions.
      The app links here through boardUrl() in src/links.ts; the URL shape is
@@ -94,8 +96,6 @@
     --stale: #B8860B;
     --on-accent: #FFFFFF;
     --track: #E4EBF1;
-    /* BRAND.md rule 2: the wordmark's ink on light grounds, chalk on dark. */
-    --wordmark: #16232E;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -118,7 +118,6 @@
          ground's ink reads 6.8:1. */
       --on-accent: #0B1622;
       --track: #16283A;
-      --wordmark: #E9F0F6;
     }
   }
   * { box-sizing: border-box; }
@@ -136,10 +135,13 @@
   }
   button { font: inherit; }
 
-  /* The lockup (brand/BRAND.md; brand/render-lockups.mjs geometry): the
-     mark's halves are --m tall, the wordmark is 1.412 x --m with its
-     baseline on the mark's bottom edge and its origin 0.659 x --m to the
-     right of the mark. The font holds only the four letters of "Rally". */
+  /* ── The lockup (Denis, 2026-10-14: one lockup wherever the mark and the
+     word stand together, at the homepage's proportions, in the brand font) ──
+     --m is the height of the mark's halves; the SVG box (viewBox 0 0 96 96)
+     is 96/68 of it. The word is Archivo 700 at -0.025em (brand/BRAND.md): its
+     cap height 0.618 x --m, optically centred on the mark, its ink 0.711 x --m
+     from the mark's ink. this is the copy of site/style.css's rules (same markup); verify-site and verify-board measure both. The font is an
+     Archivo subset of R, a, l and y inlined (1.2 KB, OFL): no request. */
   @font-face {
     font-family: "Rally Wordmark";
     font-style: normal;
@@ -147,28 +149,30 @@
     font-display: block;
     src: url(data:font/woff2;base64,d09GMgABAAAAAATQABAAAAAACJAAAARzAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhYbgRocWgZgP1NUQVRaAFQRCAqEPINaCxAAATYCJAMcBCAFhFAHIAwHGwYHyAQeeDyr95N0kBRDpCt06AUHRAcLqDlIvT0Bg4PZ/P/3jttAE9cD8P79rbda9v443hiTEo03Z51oDc4sCgPGluFVF7gLtQjACi8kBEMtzj2gModUpBWrSmuxu7s2j6EUSp3wX1Ex0rdxjIBAtjwKEgGiFBXTOc2qc1mChKUD+3eENvM38zcw/8AmCTzoRuVoxKDWzqogJMH9AAVB2dNZZtGHQayuK9FRoYVhSnjWPd7jloNePGBIyGYUqUp6CKZbekjysFOozeJ9UvkHPXoFTpuV6N8KMNzrVJSVr+UKdHbIY6YLlFJxkY44ezuFXbqFUnXkCXAAViGMPbQEaVvv5kEhYNvA4GbmsBja3OUWMUjMIgI/ZEGVROykQbBQQw+QHkrmJRFJ76nFGRQKs2EoFJ8qnMY+BZ1qunCzYy9GE3vML8xbzSvN802jy4heLRCmiYNQf4fbb4nhHv5JE6oQYoEY2sP/KIosy7JDTbUrCYs1i03pttXXNtT3ybWuBqtmsRlTU+yfXNOk1qvImvGmOHDLA6pa53nmhSfEgZmZGU0cuOwB1XPXDaCed0AcmJnRjKkp2O/VNM65S/U8cGOMesNzkw3GgydvFcIz+RL7vXdrFk2p8zwTITTjwVtj27W6C6+8Mlo7//LLL49s0BovmXxtssszPS2Ett97t2a8eKcQ6g0PPad6poWsSfsv9V6rGS/eKWRN2j85OVn60G8PXZ1S6/U9+7rX5/Wd/r/P63vP66ul9Jbtpb0ZKZ1Fy/P6PUbItdv/fvSfiVeXRiQlNJ+b+CovaDEnC1VXVtLqxgW7HOvnR3683Ok8PcBhPaYE+ruylvXNXrG2e2762uwfQ4ptzpZzLkqIf+yDOn/FURysDMbd9l5gVHx2g322HhIdT/GbxpsYD85Vu9oLordO9r5sO7vpl8pP/lhhKTj3+msK1v16yh2/fTuvNHeVzvwHV/Q4M5al2o+HNQ5HLco/sdBlifjkzjmV7fU9y43F0XfU/x3mdD09x3HKVOGsluK89gQAEIDEsqtFSGSHI//3AFn+CuDd/+NuB3gvuyjYDPMNW5YpqxH4IQEgQB674VtZ+s2w/52WZXfmPfCXDEqldyiVVuAUGsXSbBRpgrU8dWer/RnBn9X3ZUwPJhU7t9zgpBLI6TfwT4QEdr6DP4Z/hpGMi3uQQhSXIQsxHEZ+ROH220knm4i7zJdgJFCZNRUwdJ2IxEoENsRYVBzLnoJqxhmlizHWsvk9dQ/RQznjbCza5aaBIXrZzCDBfRwewKA8spnNTJBLEklsooeNDHF4s4xdOIBVN64BDg2QRAWrKKWEjfRwrw2xlXGWsoxx3PRSTx8bm39rnDF0UnGRTDIprE0fqfy0PCooo5y15A0d9iZU4eWsOsEOyMH1wKQ02dpep5ZB+tAnF5Vs5LLD9NHTWC1hy07AKoub0FmwK3wTpw4wVCm20C3Tnr2G3fi1UcYYopstbGIptexggj6SJqMLf0RJmGe6WYJeeZ8wj9ymnAoAAAA=) format("woff2");
   }
-  .brand {
-    --m: 24px;
+  .brandrow {
+    --m: 25.5px;
     display: inline-flex;
-    align-items: baseline;
-    gap: calc(var(--m) * 0.659);
-    color: var(--wordmark);
+    align-items: center;
+    gap: calc(var(--m) * 0.420);
     text-decoration: none;
-    border-radius: 8px;
+    color: inherit;
     transition: opacity 0.15s ease;
   }
-  .brand:hover { opacity: 0.82; }
-  .brand:active { opacity: 0.65; }
-  .brand-mark { display: block; flex: none; width: calc(var(--m) * 64 / 68); height: var(--m); }
-  .brand-mark .m-us { fill: var(--us); }
-  .brand-mark .m-them { fill: var(--them); }
-  .brand-word {
-    font-family: "Rally Wordmark", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  a.brandrow:hover { opacity: 0.82; }
+  a.brandrow:active { opacity: 0.65; }
+  .brandrow .mark { flex: none; width: calc(var(--m) * 96 / 68); height: calc(var(--m) * 96 / 68); }
+  .brandrow .n {
+    font-family: "Rally Wordmark", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-weight: 700;
-    font-size: calc(var(--m) * 1.412);
+    font-size: calc(var(--m) * 0.899);
     line-height: 1;
     letter-spacing: -0.025em;
+    color: var(--ink);
+    transform: translateY(0.042em);
   }
+  .mark .m-us { fill: var(--us); }
+  .mark .m-them { fill: var(--them); }
+  /* end of the lockup */
 
   /* Header: the X (left), the sport (center), the connection (right). */
   header {
@@ -207,7 +211,9 @@
   body.following #status { visibility: visible; }
   /* The code entry shows the lockup in the centre, a followed match its sport. */
   body:not(.following) #sport { display: none; }
-  body.following .brand { display: none; }
+  /* The code entry: no header, so the logo, the headline and the code stand
+     centred on the whole screen (Denis, 2026-10-14). */
+  body:not(.following) header { display: none; }
   #dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
     background: var(--fresh); }
   #dot.stale { background: var(--stale); }
@@ -235,6 +241,7 @@
     padding-bottom: 8vh;
   }
   #joinForm.show { display: flex; }
+  #joinForm .brandrow { --m: 30px; margin-bottom: 10px; }
   #joinForm h1 { margin: 0; font-size: 28px; line-height: 34px; font-weight: 700;
     letter-spacing: -0.02em; }
   #joinHint { margin: 0; color: var(--ink-soft); font-size: 16px; max-width: 26em; }
@@ -392,7 +399,6 @@
       border-radius: 999px; font-size: clamp(15px, 0.7vw + 8px, 26px); gap: clamp(8px, 0.6vw, 14px); }
     #swap svg { width: clamp(18px, 1vw + 6px, 32px); height: clamp(18px, 1vw + 6px, 32px); }
     #codeLabel { font-size: clamp(14px, 0.7vw + 8px, 26px); }
-    .brand { --m: clamp(24px, 1vw + 14px, 40px); }
   }
   /* Short landscape phones: everything fits one screen; the tiles give
      up height first. */
@@ -415,14 +421,13 @@
     #sets { min-height: 44px; }
     .set b { font-size: 20px; line-height: 23px; }
     #swap { min-height: 40px; }
-    .brand { --m: 20px; }
+    #joinForm .brandrow { --m: 22px; margin-bottom: 0; }
   }
 </style>
 </head>
 <body>
 <header>
   <div id="status"><span id="dot"></span><span id="statusText"></span></div>
-  <a class="brand" id="brand" href="../"><svg class="brand-mark" viewBox="16 14 64 68" aria-hidden="true" focusable="false"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg><span class="brand-word">Rally</span></a>
   <div id="sport">Rally</div>
   <button type="button" id="leave" aria-label="Leave match" title="Leave match">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -430,6 +435,7 @@
 </header>
 <main>
   <form id="joinForm" novalidate>
+    <a class="brandrow" id="brand" href="../"><svg class="mark" viewBox="0 0 96 96" aria-hidden="true" focusable="false"><rect class="m-us" x="16" y="14" width="30" height="68" rx="12"/><rect class="m-them" x="50" y="14" width="30" height="68" rx="12"/></svg><span class="n">Rally</span></a>
     <h1 id="joinTitle">Follow a live match</h1>
     <p id="joinHint">Enter the 6-digit code from the host.</p>
     <input id="codeInput" inputmode="numeric" autocomplete="one-time-code"
