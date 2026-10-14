@@ -11,12 +11,20 @@ in `/`.
 README.md            this file
 icon.svg             the court-sides mark on the court-night ground (favicon)
 style.css            shared tokens and components (STYLE_GUIDE.md palette)
-index.html           landing: hero with a working watch scorer (engine-faithful
-                     padel: golden point or advantage, tiebreak, serve rotation,
-                     viewer-perspective serve ball, the round 28 deciding-point
-                     card at 40:40), how it works, sports, live sharing (the
-                     phone Board runs the same match as the watch's mirror),
-                     trust, free and Pro (features only, no prices)
+app-store-badge.svg  Apple's "Download on the App Store" badge, en-us black,
+                     Apple's file byte for byte (see "Apple's artwork")
+devices/             Apple's product images for the landing: Apple Watch
+                     Series 11 46 mm Jet Black (Apple's PNG untouched) and
+                     iPhone 18 Pro Max Black (a uniform 13/30 copy)
+index.html           landing: hero with the App Store badge and a working
+                     watch scorer (engine-faithful padel: golden point or
+                     advantage, tiebreak, serve rotation, viewer-perspective
+                     serve ball, the round 28 deciding-point card at 40:40)
+                     under Apple's watch image, how it works, sports, live
+                     sharing (the iPhone Board under Apple's iPhone image runs
+                     the same match as the watch's mirror), trust, free and
+                     Pro (features only, no prices), Apple's credit line in
+                     the footer
 privacy/index.html   privacy policy, EN with the DE version beneath
 terms/index.html     terms of use, EN with the DE version beneath
 support/index.html   contact, what the app is, common questions
@@ -29,10 +37,18 @@ board/index.html     live scoreboard for a share code (self-contained;
 
 Public GitHub Pages PROJECT repo under the `denisfenger` account, Pages
 served from `main` / root. Kit naming rule (playbook 3b): the public
-site repo takes the bare app name, `denisfenger/rally`, so the base URL
-is `https://denisfenger.github.io/rally`; the private app source is
-`denisfenger/rally-app`. That base is the ONE constant `SITE_BASE` in
-`src/links.ts`, and every URL the app emits derives from it:
+site repo takes the bare app name, `denisfenger/rally`; the private app
+source is `denisfenger/rally-app`. Since 2026-10-03 the site lives at
+the custom domain `https://rally.softailed.com` (Cloudflare CNAME `rally`
+-> `denisfenger.github.io`, DNS only; GitHub Pages custom domain with
+HTTPS enforced; `CNAME` in this folder keeps it across mirrors), and
+every old `https://denisfenger.github.io/rally/...` address answers 301
+to the same path on the new domain. The App Store listing links to the
+new domain since the 1.0.0 resubmission (2026-10-12). The base the app
+emits is the ONE constant `SITE_BASE` in `src/links.ts`, still the old
+address in 1.0 (it forwards); it moves to the new domain in the first
+update (feedback round 33, item 2). Every URL the app emits derives from
+it:
 
 | helper          | URL shape                        | used by                          |
 |-----------------|----------------------------------|----------------------------------|
@@ -58,13 +74,15 @@ Later content pushes work with the headless git recipe.
 
 ## Rules that hold on every page
 
-- `<meta name="robots" content="noindex, nofollow">` on ALL pages until
-  release. A `robots.txt` in this repo does nothing for a project page
-  (crawlers read it only at the domain root, which is the user-site
-  repo). The pages stay reachable by URL, which App Review requires.
-  Remove the tag on every page at release.
+- INDEXED since release day: no page carries a robots meta tag. Until
+  Rally was on the App Store every page carried `<meta name="robots"
+  content="noindex, nofollow">` (a `robots.txt` in this repo does nothing
+  for a project page: crawlers read it only at the domain root); the
+  release-day push removed it from all six pages, and verify-site and
+  verify-board fail if it comes back.
 - NO external requests: system font stack, no Google Fonts, no CDN, no
-  analytics, no remote images. The only network calls on the whole
+  analytics, no remote images. Apple's badge and product images are
+  files in this folder. The only network calls on the whole
   site are the board's, all to the ONE Supabase project that is the
   relay: its two edge-function POSTs (`share-join`, `share-state`)
   and, since feedback round 27, one WebSocket to the project's Realtime
@@ -75,7 +93,10 @@ Later content pushes work with the headless git recipe.
   Verify with
   `grep -rn "http[s]*://" site/` before every push: the supabase.co
   calls in `board/index.html` and `mailto:` links are the only hits
-  allowed (plus the SVG namespace in `icon.svg`).
+  allowed, plus the App Store listing `https://apps.apple.com/app/id6807145117`
+  as two LINKS (the landing's badge and the board's "Scored with Rally";
+  a link loads nothing until it is followed) and the SVG namespace in
+  `icon.svg` and `app-store-badge.svg`.
 - NO pricing on the landing (the store is the source of truth).
 - CONTENT CURRENCY: the landing describes features, so any round that
   adds or removes a feature updates `index.html` in the same round.
@@ -94,9 +115,70 @@ Later content pushes work with the headless git recipe.
   visible pressed state. The one element that listens for clicks and is
   NOT a control is the landing's deciding-point card: it catches clicks
   only to refuse them, so it keeps the default cursor (the verifier
-  checks both sides of that).
+  checks both sides of that). The App Store badge is a control whose
+  states never touch the badge (Apple forbids modifying or animating
+  it): they are a ring drawn just outside its clear space.
 - House voice: sentence case, no emoji, no exclamation marks, no em
   dashes in visible copy.
+
+## Apple's artwork (release day)
+
+Apple's artwork licence covers only an app that is on the App Store, so
+the landing drew its own watch and iPhone and showed a "Coming to the App
+Store" pill until Rally 1.0 was approved (Denis, 2026-10-01); the
+release-day push swapped both, with noindex dropped, in one commit.
+Sources: App Store Marketing Guidelines (badges, product images, legal
+requirements) and the slides' notes on the device images
+(`../Matchpoint-scratch/2026-10-01/rally-slides/assets/rules.md` and
+`devices.json`, outside this repo).
+
+- THE BADGE (`app-store-badge.svg`): Apple's "Download on the App Store"
+  badge, US-UK black (the landing is English), exactly as
+  `toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us`
+  and the guidelines page serve it (10,804 bytes, LF line ends; sha256
+  `a26fc5b3...`, which verify-site pins). Never redraw, recolour, crop,
+  angle, animate or re-export it; a new badge is a new download. Rules
+  kept: ONE badge on the page, in a subordinate position under the
+  headline, 56 px high (Apple's minimum onscreen is 40 px), a clear space
+  of a quarter of its height (14 px) around it with nothing in it, its
+  link the listing `https://apps.apple.com/app/id6807145117`. Its hover,
+  pressed and focus states are a 2 px ring at `outline-offset: 14px`, so
+  the badge itself never changes. Apple's credit line for the badge and
+  the devices stands once, in the landing's footer (international form,
+  no symbols).
+- THE DEVICES (`devices/`): the App Store slides' files from Apple Design
+  Resources (Product Bezels). Apple Watch Series 11, 46 mm, Jet Black
+  aluminium with the Black Sport Band, is Apple's own 560 x 880 PNG,
+  untouched, shown at 280 x 440 (2x). iPhone 18 Pro Max, Black, is a copy
+  of Apple's 1470 x 3000 PNG at exactly 13/30 on both axes (637 x 1300,
+  area-averaged on premultiplied alpha, nothing else changed), shown at
+  318.5 x 650 (2x). Never upscale past Apple's pixel size. Each device is
+  shown whole, upright, uniformly scaled, with no shadow, glow,
+  reflection or filter and nothing on top of it or overlapping it. The
+  live screen lies UNDER the image's transparent display: a box at
+  devices.json `ui.box`, clipped to `ui.clipPath`, the screen at
+  `ui.contentOffset` (it fills Apple's display rectangle exactly), and the
+  image passes the pointer through (`pointer-events: none`), so the
+  demo's tiles take the taps. The watch's score page is laid out at the
+  46 mm display's own 208 x 248 pt, as the slides lay it out; the iPhone
+  draws no island of its own (the image has the real one) and centres
+  its status bar on it with full signal, Wi-Fi and battery (Apple's
+  status bar rule). Every length on a device's screen is a multiple of
+  `--u` (one CSS pixel at full size, from container query units), so
+  below its full width the image and its screen scale as one.
+- RELATIVE SIZE: the two devices are NOT at true relative size (at true
+  scale the watch's display would be about 128 px wide beside a 650 px
+  iPhone, too small to play the demo). Apple asks for the correct
+  relative scale whenever several products are shown, so they stay in
+  separate bands, never in one ordinary viewport: verify-site requires at
+  least 1,000 px between them at every width (about 1,850 at 1280, 2,600
+  at 390; only a screen taller than that, a portrait 4K monitor, could
+  show both at once). A layout that brings them together must put them at
+  true relative size (devices.json `relativeScale`).
+- The device files may not be redistributed (Design Resources licence):
+  they are served only as the page's images, with no download link, and
+  only while Rally is on the App Store and Fenger Digital GmbH is in the
+  Apple Developer Program.
 
 ## The board
 
@@ -119,7 +201,10 @@ form. The page speaks every launch language, English, German,
 Spanish, French, Italian and Portuguese (round 31 verify; it spoke
 English and German until then), by the browser's language list (the
 primary subtag: pt-BR reads Portuguese), else English; `?lang=` forces
-one. THE LINK IS NEUTRAL (round 27): no side
+one. The footer's "Scored with Rally" (in the page's language) opens the
+App Store listing in a new tab since release day, so a follower reaches
+the app without losing the live score; it is a link, not a request.
+THE LINK IS NEUTRAL (round 27): no side
 choice, the result reads "<names> won"; Swap sides stays. It draws the
 app's Board: tinted tiles in initials, the optic serve ball placed from
 the viewer's side with the serving player's name (the host uploads
@@ -238,16 +323,40 @@ load; lists every element with a click handler or interactive role and
 requires a computed `cursor: pointer` (the card's two buttons
 included; the card itself must keep the default cursor) plus a visible
 hover and pressed state under real mouse events (the card buttons
-too, their release answering); renders 390, 768 and 1280 full-page
+too, their release answering); renders 320, 390, 768 and 1280 full-page
 PNGs with overflow probes; asserts no external request, no console
 error and no running animation under `prefers-reduced-motion:
-reduce`. PNGs land in `%TEMP%/rally-site-verify/` (set
+reduce`. RELEASE DAY (Apple's artwork, above): no page carries a robots
+meta or pre-release wording ("coming soon", "TestFlight", "at
+launch"...); the badge is Apple's file (sha256 over LF), local, one on
+the page, linked to the listing, at least 40 px high at every width
+with its clear space empty (no element's box enters it), and under real
+pointer events its hover and pressed rings stand outside the clear space
+while the badge itself does not change (the press is released with
+navigation blocked, so nothing leaves for Apple); the device files are
+the reviewed ones (sha256, natural size, never above Apple's), and at
+each of the four widths each device loads from the site, keeps its
+natural aspect, is about 2x its displayed size, stands at least 200 px
+high, lies wholly inside the page and every clipping box, carries no
+transform, filter, opacity, shadow, clip or mask anywhere up its tree,
+paints over its screen with the pointer passing through, has nothing on
+top of it (187 sample points over its silhouette hit the image) and
+nothing overlapping it (no element's box meets its silhouette), and its
+live screen fills Apple's display rectangle to within 0.75 px; the
+iPhone's status bar shows full signal, Wi-Fi and battery and the time on
+either side of the real Dynamic Island, on its centre line, with no text
+under it; the watch and the iPhone stay at least 1,000 px apart. PNGs land in
+`%TEMP%/rally-site-verify/` (set
 `RALLY_SITE_OUT` to change); eyeball them, sliced if tall. The card
 has its own: `watch-card-serve.png`, `watch-card-receive.png`,
 `watch-card-answered.png` (2x crops of the hero watch),
 `hero-card-1280.png`, `share-card-1280.png` (the phone's centred ball)
 and `hero-card-serve-390.png` / `hero-card-receive-390.png`. Last run
-2026-09-29 (round 30): 4633 checks, all green.
+2026-10-03 (release day branch): 5170 checks, all green; a mutation run
+(a noindex back on one page, "Coming soon" on another, one byte of the
+badge, the watch screen 3 px off, the iPhone stretched, a shadow on it,
+the hint over it, the badge 36 px high, the link 8 px from it) failed
+exactly the matching checks.
 
 Why the protocol and not `msedge --screenshot`: headless Edge lays out
 no narrower than ~476 CSS px from the command line (kit `lessons.md`),
@@ -275,7 +384,9 @@ German, the entry form's answers and the X back to it, no request
 beyond the relay, no console error, no overflow, and (second pass and
 review) the X top right, 1 v 1 full names on the host's word, the
 wide sizes, a server name not in the lists showing nothing, landscape
-fits. Last run 2026-09-29 (round 30): 209 checks, all green. Run it after ANY change to
+fits, and (release day) no robots meta and the footer link to the App
+Store listing in a new tab, in English and German. Last run 2026-10-03
+(release day branch): 258 checks, all green. Run it after ANY change to
 `board/index.html`. A live smoke test against the deployed relay
 (share-create, share-uplink with an ended snapshot, share-end, the
 page on a local static server) is still worth one run before a

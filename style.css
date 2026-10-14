@@ -10,10 +10,12 @@
    opens dark and alternates dark and light bands; the legal pages stay on
    the light ground because they are read, not scanned.
 
-   The watch and phone on the landing are drawn in CSS from the real token
-   values and the real screen contracts, so nothing here can go stale
-   against a screenshot. CONTENT RULE: whenever app features change, the
-   landing changes in the same round.
+   The watch and the iPhone on the landing are Apple's own product images
+   (since release day; Apple allows no drawn Apple device in marketing).
+   Their SCREENS are drawn in CSS from the real token values and the real
+   screen contracts, so nothing here can go stale against a screenshot.
+   CONTENT RULE: whenever app features change, the landing changes in the
+   same round.
 
    Motion is CSS only and lives inside prefers-reduced-motion:
    no-preference; with reduce, nothing on the page moves.
@@ -188,7 +190,23 @@ h3 { font-size: 1.15rem; margin: 0.2rem 0 0.5rem; letter-spacing: -0.015em; }
 .note { font-size: 0.92rem; color: var(--ink-faint); margin: 1.2rem 0 0; max-width: 34em; }
 
 /* ── Calls to action ─────────────────────────────────────────────────── */
-.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem 1.5rem; margin-top: 2.2rem; }
+.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem 1.5rem; margin-top: 2.2rem; }
+/* Apple's App Store badge (release day): the file as Apple serves it, 56 px
+   high (Apple's minimum onscreen is 40). Apple forbids modifying, angling
+   or animating it and keeps a clear space of a quarter of its height (14
+   px) free of everything else, so the badge itself never changes: its
+   hover, pressed and focus states are a ring drawn just OUTSIDE that clear
+   space (outline-offset 14 px), on the link's own rounded box. */
+.appstore {
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+  border-radius: 13px;
+}
+.appstore img { display: block; width: auto; height: 56px; aspect-ratio: 119.66407 / 40; max-width: none; }
+.appstore:hover { outline: 2px solid var(--ink-faint); outline-offset: 14px; }
+.appstore:active { outline: 2px solid var(--ink); outline-offset: 14px; }
+.appstore:focus-visible { outline: 2px solid var(--us); outline-offset: 14px; border-radius: 13px; }
 .pill {
   display: inline-flex;
   align-items: center;
@@ -204,7 +222,6 @@ h3 { font-size: 1.15rem; margin: 0.2rem 0 0.5rem; letter-spacing: -0.015em; }
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--us); flex: none; }
-.pill.static { cursor: default; }
 a.pill:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--ink-faint); }
 a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .quiet {
@@ -270,6 +287,8 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 }
 .hero-grid { gap: clamp(2.5rem, 6vw, 5rem); }
 .hero-copy .eyebrow { color: var(--us); }
+/* Room for the badge's hover ring (16 px out) above the line below. */
+.hero-copy .note { margin-top: 1.5rem; }
 .sportstrip {
   display: flex;
   flex-wrap: wrap;
@@ -325,93 +344,107 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .seg-btn.is-on { background: var(--us); color: #FFFFFF; }
 .seg-btn.is-on:hover { background: var(--us); color: #FFFFFF; }
 
-/* ── Watch mockup (drawn from the watch match screen contract) ───────── */
-.watch {
-  width: 272px;
-  max-width: 100%;
+/* ── Apple's product images (release day) ────────────────────────────────
+   The watch and the iPhone are Apple's own product images (Apple Design
+   Resources, Product Bezels), the files the App Store slides use, shown the
+   way Apple's marketing guidelines allow: whole, upright, uniformly scaled,
+   no shadow, glow or reflection, nothing on top. The app screen lies UNDER
+   the image's transparent display: a box at devices.json ui.box, clipped to
+   ui.clipPath (the clip hides the screen rectangle's square corners, and
+   its bleed covers the soft edge of the display hole), with the screen at
+   ui.contentOffset inside it. The image passes every pointer through
+   (pointer-events: none), so the tiles under the glass take the taps. Each
+   device is a size container and every length on its screen is a multiple
+   of --u, one CSS pixel at full size: below its full width the image and
+   the screen scale as one, never apart. */
+.watch, .phone {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  --wb: #1B2631;
-  --wb2: #0C1218;
+  flex: none;
+  container-type: inline-size;
 }
-.watch .strap {
-  width: 112px;
-  height: 46px;
-  background: linear-gradient(90deg, #121A22, #1E2A36 50%, #121A22);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.watch .strap.top { border-radius: 14px 14px 4px 4px; border-bottom: 0; }
-.watch .strap.bottom { border-radius: 4px 4px 14px 14px; border-top: 0; }
-.watch .case {
-  position: relative;
+.hw {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 100%;
-  background: linear-gradient(160deg, #2B3947, var(--wb) 45%, var(--wb2));
-  border-radius: 66px;
-  padding: 13px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-    0 30px 70px rgba(0, 0, 0, 0.55),
-    0 4px 12px rgba(0, 0, 0, 0.45);
+  height: 100%;
+  max-width: none;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
-.watch .crown {
-  position: absolute;
-  right: -9px;
-  top: 76px;
-  width: 10px;
-  height: 42px;
-  border-radius: 4px;
-  background: repeating-linear-gradient(180deg, #2B3947 0 2px, #141D26 2px 4px);
-  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.5);
+.uibox { position: absolute; z-index: 0; overflow: hidden; }
+.uibox > .screen { position: absolute; overflow: hidden; }
+
+/* ── Watch: Apple Watch Series 11, 46 mm, Jet Black aluminium with the
+   Black Sport Band (Apple's 560 x 880 PNG untouched, shown at 280 x 440:
+   2x). The screen is the 46 mm display at its own 208 x 248 pt, the score
+   page as the slides lay it out (targets/watch/ContentView.swift
+   ScorePage): the 37 pt status band, two 97 x 151 pt tiles 6 pt apart,
+   the bottom row at 192 pt. ─────────────────────────────────────────── */
+.watch {
+  width: min(280px, 100%);
+  aspect-ratio: 560 / 880;
+  --u: calc(100cqw / 280);
 }
-.watch .sidebtn {
-  position: absolute;
-  right: -7px;
-  top: 134px;
-  width: 7px;
-  height: 58px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #1E2A36, #2B3947);
+.watch .uibox {
+  left: calc(34.5 * var(--u));
+  top: calc(94.5 * var(--u));
+  width: calc(211 * var(--u));
+  height: calc(251 * var(--u));
+  background: #000000;
+  clip-path: polygon(0% 25.697%, 0.07% 24.39%, 0.139% 23.111%, 0.209% 21.823%, 0.319% 20.532%, 0.458% 19.242%, 0.643% 17.947%, 0.903% 16.662%, 1.211% 15.375%, 1.635% 14.107%, 2.129% 12.861%, 2.712% 11.635%, 3.418% 10.448%, 4.21% 9.321%, 5.082% 8.239%, 6.039% 7.231%, 7.031% 6.192%, 8.243% 5.375%, 9.364% 4.474%, 10.681% 3.741%, 11.999% 3.054%, 13.403% 2.463%, 14.836% 1.92%, 16.324% 1.502%, 17.817% 1.118%, 19.343% 0.84%, 20.87% 0.592%, 22.415% 0.429%, 23.946% 0.304%, 25.48% 0.193%, 27.015% 0.129%, 28.537% 0.065%, 30.095% 0%, 69.905% 0%, 71.463% 0.065%, 72.985% 0.129%, 74.52% 0.193%, 76.054% 0.304%, 77.585% 0.429%, 79.13% 0.592%, 80.657% 0.84%, 82.183% 1.118%, 83.676% 1.502%, 85.164% 1.92%, 86.597% 2.463%, 88.001% 3.054%, 89.319% 3.741%, 90.636% 4.474%, 91.757% 5.375%, 92.969% 6.192%, 93.961% 7.231%, 94.918% 8.239%, 95.79% 9.321%, 96.582% 10.448%, 97.288% 11.635%, 97.871% 12.861%, 98.365% 14.107%, 98.789% 15.375%, 99.097% 16.662%, 99.357% 17.947%, 99.542% 19.242%, 99.681% 20.532%, 99.791% 21.823%, 99.861% 23.111%, 99.93% 24.39%, 100% 25.697%, 100% 74.303%, 99.93% 75.61%, 99.861% 76.889%, 99.791% 78.177%, 99.681% 79.468%, 99.542% 80.758%, 99.357% 82.053%, 99.097% 83.338%, 98.789% 84.625%, 98.365% 85.893%, 97.871% 87.139%, 97.288% 88.365%, 96.582% 89.552%, 95.79% 90.679%, 94.918% 91.761%, 93.961% 92.769%, 92.969% 93.808%, 91.757% 94.625%, 90.636% 95.526%, 89.319% 96.259%, 88.001% 96.946%, 86.597% 97.537%, 85.164% 98.08%, 83.676% 98.498%, 82.183% 98.882%, 80.657% 99.16%, 79.13% 99.408%, 77.585% 99.571%, 76.054% 99.696%, 74.52% 99.807%, 72.985% 99.871%, 71.463% 99.935%, 69.905% 100%, 30.095% 100%, 28.537% 99.935%, 27.015% 99.871%, 25.48% 99.807%, 23.946% 99.696%, 22.415% 99.571%, 20.87% 99.408%, 19.343% 99.16%, 17.817% 98.882%, 16.324% 98.498%, 14.836% 98.08%, 13.403% 97.537%, 11.999% 96.946%, 10.681% 96.259%, 9.364% 95.526%, 8.243% 94.625%, 7.031% 93.808%, 6.039% 92.769%, 5.082% 91.761%, 4.21% 90.679%, 3.418% 89.552%, 2.712% 88.365%, 2.129% 87.139%, 1.635% 85.893%, 1.211% 84.625%, 0.903% 83.338%, 0.643% 82.053%, 0.458% 80.758%, 0.319% 79.468%, 0.209% 78.177%, 0.139% 76.889%, 0.07% 75.61%, 0% 74.303%);
 }
 .watch .screen {
-  position: relative;
+  left: calc(1.5 * var(--u));
+  top: calc(1.5 * var(--u));
+  width: calc(208 * var(--u));
+  height: calc(248 * var(--u));
   background: #000000;
-  border-radius: 54px;
-  height: 306px;
-  padding: 10px 11px 9px;
   color: var(--d-ink);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  overflow: hidden;
 }
-/* The status band: the sport (or, round 28, the deciding point's name)
-   top left, the clock top right; the tiles have the height below it. */
+/* The status band: the sport (or, round 28, the deciding point's name) at
+   the leading inset and the clock at the trailing one, 16 pt on the band's
+   24.5 pt centre line, clear of the display's rounded corners. */
 .watch .statusrow {
-  height: 18px;
+  position: absolute;
+  left: calc(17 * var(--u));
+  right: calc(17 * var(--u));
+  top: calc(12.5 * var(--u));
+  height: calc(24 * var(--u));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px 0 16px;
-  font-size: 11px;
+  gap: calc(8 * var(--u));
+  font-size: calc(16 * var(--u));
   font-weight: 600;
-  line-height: 14px;
-  color: var(--d-ink-soft);
+  line-height: calc(24 * var(--u));
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
   font-variant-numeric: tabular-nums;
 }
-.watch .band-lbl { color: var(--d-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tiles { position: relative; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-height: 0; }
+.watch .band-lbl { min-width: 0; color: rgba(255, 255, 255, 0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watch .clock { flex: none; }
+.tiles {
+  position: absolute;
+  left: calc(4 * var(--u));
+  top: calc(37 * var(--u));
+  width: calc(200 * var(--u));
+  height: calc(151 * var(--u));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(6 * var(--u));
+}
 .tile {
   position: relative;
-  border-radius: 16px;
+  border-radius: calc(14 * var(--u));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: calc(1 * var(--u));
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -424,7 +457,7 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .tile.us { background: rgba(91, 150, 232, 0.22); color: var(--d-us); }
 .tile.them { background: rgba(224, 131, 80, 0.22); color: var(--d-them); }
 .tile .who {
-  font-size: 10px;
+  font-size: calc(10 * var(--u));
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -435,7 +468,7 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
    (an empty label); min-height keeps its line, so its label stays level
    with the other tile's (in the phone mockup too). */
 .tile .num {
-  font-size: 44px;
+  font-size: calc(44 * var(--u));
   font-weight: 800;
   line-height: 1;
   min-height: 1em;
@@ -446,36 +479,37 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
    lane (bottom) = our serve, far lane (top) = theirs. */
 .ball {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
   border-radius: 50%;
   background: var(--d-serve);
   display: none;
   pointer-events: none;
 }
 .serving .ball { display: block; }
-.ball.near { bottom: 7px; }
-.ball.far { top: 7px; }
-.ball.left { left: 7px; }
-.ball.right { right: 7px; }
-.ball.center { left: 50%; margin-left: -6px; }
+.ball.near { bottom: calc(7 * var(--u)); }
+.ball.far { top: calc(7 * var(--u)); }
+.ball.left { left: calc(7 * var(--u)); }
+.ball.right { right: calc(7 * var(--u)); }
+.ball.center { left: 50%; margin-left: calc(-6 * var(--u)); }
 /* The deciding-point card (feedback round 28, STYLE_GUIDE "The
-   deciding-point card", targets/watch/DecidingPointCard.swift at the 45 mm
-   layout): opaque over both tiles and nothing else, the lead line, the
-   question from the wearer's position, two neutral buttons that are never
-   lit, each with the court drawing. It appears and goes in one frame (no
-   fade: a fading card would pass clicks) and catches every click; only the
-   buttons are controls, so the card itself keeps the default cursor. */
+   deciding-point card", targets/watch/DecidingPointCard.swift, at the
+   slides' 46 mm geometry): opaque over both tiles and nothing else, the
+   lead line, the question from the wearer's position, two neutral buttons
+   that are never lit, each with the court drawing. It appears and goes in
+   one frame (no fade: a fading card would pass clicks) and catches every
+   click; only the buttons are controls, so the card itself keeps the
+   default cursor. */
 .watch .dcard {
   position: absolute;
   inset: 0;
   z-index: 2;
-  border-radius: 16px;
+  border-radius: calc(14 * var(--u));
   background: #1C1C1E;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 10px 7px 12px;
+  padding: calc(6 * var(--u)) calc(6 * var(--u)) calc(12 * var(--u));
   text-align: center;
   cursor: default;
   user-select: none;
@@ -483,16 +517,16 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
   -webkit-tap-highlight-color: transparent;
 }
 .watch .dcard:focus-visible { outline-offset: 2px; }
-.watch .dcard.miss { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28); }
-.watch .dc-lead { margin: 0; font-size: 12px; font-weight: 500; line-height: 1.3; color: rgba(255, 255, 255, 0.62); }
-.watch .dc-q { margin: 3px 0 0; font-size: 17px; font-weight: 700; line-height: 1.22; color: #FFFFFF; text-wrap: balance; }
-.watch .dc-btns { margin-top: auto; display: flex; gap: 7px; }
+.watch .dcard.miss { box-shadow: inset 0 0 0 calc(2 * var(--u)) rgba(255, 255, 255, 0.28); }
+.watch .dc-lead { margin: 0; padding-bottom: calc(2 * var(--u)); font-size: calc(12 * var(--u)); font-weight: 500; line-height: calc(14 * var(--u)); color: rgba(255, 255, 255, 0.62); white-space: nowrap; }
+.watch .dc-q { margin: 0; font-size: calc(16 * var(--u)); font-weight: 700; line-height: calc(19 * var(--u)); letter-spacing: -0.01em; color: #FFFFFF; text-wrap: balance; }
+.watch .dc-btns { margin-top: auto; display: flex; gap: calc(6 * var(--u)); }
 .watch .dc-btn {
   flex: 1 1 0;
   min-width: 0;
-  height: 112px;
+  height: calc(64 * var(--u));
   border: 0;
-  border-radius: 16px;
+  border-radius: calc(14 * var(--u));
   padding: 0;
   background: rgba(255, 255, 255, 0.16);
   color: #FFFFFF;
@@ -500,17 +534,17 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  font-size: 21px;
+  gap: calc(4 * var(--u));
+  font-size: calc(18 * var(--u));
   font-weight: 700;
-  line-height: 1;
+  line-height: calc(20 * var(--u));
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: background-color 0.12s ease, transform 0.1s ease;
 }
 .watch .dc-btn:hover { background: rgba(255, 255, 255, 0.24); }
 .watch .dc-btn:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.3); }
-.watch .dc-court { width: 26px; height: 40px; flex: none; }
+.watch .dc-court { width: calc(20 * var(--u)); height: calc(31 * var(--u)); flex: none; }
 .dc-court .dc-box.us { fill: var(--d-us); }
 .dc-court .dc-box.them { fill: var(--d-them); }
 .dc-court .dc-edge { fill: none; stroke: rgba(255, 255, 255, 0.45); stroke-width: 2; }
@@ -518,20 +552,20 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .dc-court .dc-net { fill: none; stroke: rgba(255, 255, 255, 0.85); stroke-width: 2; }
 .dc-court .dc-serve { fill: none; stroke: var(--d-serve); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .dc-court .dc-optic { fill: var(--d-serve); }
+/* The bottom row: the set table centred in the space left of the undo
+   cluster, the undo capsule in the bottom corner on the wrist side's far
+   edge (left wrist, the default: bottom right). */
 .watch .bottomrow {
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: calc(192 * var(--u));
+  width: 100%;
+  height: calc(40 * var(--u));
 }
 .mini {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  font-size: 15px;
   font-weight: 700;
-  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 .mini .col { display: grid; gap: 0; text-align: center; }
@@ -539,115 +573,151 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .mini .b { color: var(--d-them); }
 .mini .live { color: var(--d-ink); }
 .mini .dim { color: var(--d-ink-faint); }
+.watch .mini {
+  position: absolute;
+  left: calc(6 * var(--u));
+  top: 0;
+  width: calc(93 * var(--u));
+  height: 100%;
+  align-items: center;
+  gap: calc(12 * var(--u));
+  font-size: calc(16 * var(--u));
+  line-height: calc(19 * var(--u));
+}
 .watch .undo {
   position: absolute;
-  right: 4px;
-  top: 50%;
-  margin-top: -16px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  left: calc(144 * var(--u));
+  top: 0;
+  width: calc(58 * var(--u));
+  height: calc(40 * var(--u));
+  border-radius: calc(20 * var(--u));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--d-ink-soft);
+  color: #FFFFFF;
   -webkit-tap-highlight-color: transparent;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.14);
   border: 0;
   padding: 0;
-  transition: background-color 0.12s ease, color 0.12s ease, transform 0.1s ease;
+  transition: background-color 0.12s ease, transform 0.1s ease;
 }
-.watch .undo svg { width: 16px; height: 16px; }
-.watch .undo:hover { color: var(--d-ink); background: rgba(255, 255, 255, 0.16); }
-.watch .undo:active { transform: scale(0.9); }
+.watch .undo svg { width: calc(17 * var(--u)); height: calc(17 * var(--u)); }
+.watch .undo:hover { background: rgba(255, 255, 255, 0.26); }
+.watch .undo:active { transform: scale(0.92); }
+/* The owner's end card (MatchWonOverlay) over the page. */
 .watch .overlay {
   position: absolute;
-  inset: 22px 12px 12px;
-  border-radius: 18px;
+  left: calc(4 * var(--u));
+  right: calc(4 * var(--u));
+  top: calc(41 * var(--u));
+  bottom: calc(8 * var(--u));
+  z-index: 3;
+  border-radius: calc(16 * var(--u));
   background: rgba(0, 0, 0, 0.92);
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 8px;
-  padding: 12px;
+  gap: calc(8 * var(--u));
+  padding: calc(10 * var(--u));
   text-align: center;
 }
 .watch .overlay[hidden] { display: none; }
-.watch .ov-title { margin: 0; font-size: 17px; font-weight: 700; }
-.watch .ov-sum { margin: 0; font-size: 14px; font-weight: 500; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; white-space: pre; }
+.watch .ov-title { margin: 0; font-size: calc(17 * var(--u)); font-weight: 700; line-height: 1.2; }
+.watch .ov-sum { margin: 0; font-size: calc(14 * var(--u)); font-weight: 500; line-height: 1.2; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; white-space: pre; }
 .watch .ov-end, .watch .ov-undo {
   border: 0;
-  border-radius: 12px;
   font-weight: 600;
+  line-height: 1.2;
   transition: filter 0.12s ease, transform 0.1s ease;
 }
-.watch .ov-end { min-height: 38px; background: rgba(91, 150, 232, 0.5); color: #FFFFFF; font-size: 14px; }
-.watch .ov-undo { min-height: 32px; background: rgba(255, 255, 255, 0.12); color: var(--d-ink); font-size: 13px; }
+.watch .ov-end { min-height: calc(38 * var(--u)); border-radius: calc(19 * var(--u)); background: rgba(91, 150, 232, 0.5); color: #FFFFFF; font-size: calc(16 * var(--u)); }
+.watch .ov-undo { min-height: calc(32 * var(--u)); border-radius: calc(16 * var(--u)); background: rgba(255, 255, 255, 0.14); color: var(--d-ink); font-size: calc(13 * var(--u)); }
 .watch .ov-end:hover, .watch .ov-undo:hover { filter: brightness(1.2); }
 .watch .ov-end:active, .watch .ov-undo:active { transform: scale(0.97); }
 
-/* ── Phone mockup (the courtside Board, portrait) ────────────────────── */
+/* ── iPhone: iPhone 18 Pro Max, Black (a uniform 13/30 copy of Apple's
+   1470 x 3000 PNG: 637 x 1300, shown at 318.5 x 650, so 2x). The image
+   draws the real Dynamic Island, so the screen (Apple's 1320 x 2868 px
+   display, 286 x 621.4 here) draws none: it carries the courtside Board
+   and the status bar centred on the island, the time in the left region
+   and full signal, Wi-Fi and battery in the right one (Apple's status bar
+   rule; the slides' REAL_TIME_AT and REAL_ICONS_AT). ──────────────────── */
 .phone {
-  width: 300px;
-  max-width: 100%;
+  width: min(318.5px, 100%);
+  aspect-ratio: 637 / 1300;
   margin: 0 auto;
-  background: linear-gradient(160deg, #26333F, #131C25 40%, #0A1017);
-  border-radius: 54px;
-  padding: 11px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 30px 70px rgba(0, 0, 0, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.25);
+  --u: calc(100cqw / 318.5);
+}
+.phone .uibox {
+  left: calc(14.95 * var(--u));
+  top: calc(13 * var(--u));
+  width: calc(288.6 * var(--u));
+  height: calc(624 * var(--u));
+  background: var(--d-ground);
+  clip-path: polygon(0% 7.535%, 0.041% 7.154%, 0.084% 6.78%, 0.152% 6.403%, 0.256% 6.03%, 0.363% 5.657%, 0.515% 5.282%, 0.709% 4.913%, 0.929% 4.546%, 1.207% 4.183%, 1.541% 3.838%, 1.88% 3.489%, 2.304% 3.162%, 2.734% 2.843%, 3.221% 2.536%, 3.74% 2.247%, 4.287% 1.959%, 4.917% 1.703%, 5.555% 1.473%, 6.205% 1.25%, 6.89% 1.041%, 7.617% 0.853%, 8.365% 0.698%, 9.114% 0.542%, 9.904% 0.418%, 10.697% 0.319%, 11.497% 0.231%, 12.308% 0.167%, 13.113% 0.114%, 13.921% 0.07%, 14.734% 0.036%, 15.544% 0.018%, 16.366% 0%, 83.634% 0%, 84.456% 0.018%, 85.266% 0.036%, 86.079% 0.07%, 86.887% 0.114%, 87.692% 0.167%, 88.503% 0.231%, 89.303% 0.319%, 90.096% 0.418%, 90.886% 0.542%, 91.635% 0.698%, 92.383% 0.853%, 93.11% 1.041%, 93.795% 1.25%, 94.445% 1.473%, 95.083% 1.703%, 95.713% 1.959%, 96.26% 2.247%, 96.779% 2.536%, 97.266% 2.843%, 97.696% 3.162%, 98.12% 3.489%, 98.459% 3.838%, 98.793% 4.183%, 99.071% 4.546%, 99.291% 4.913%, 99.485% 5.282%, 99.637% 5.657%, 99.744% 6.03%, 99.848% 6.403%, 99.916% 6.78%, 99.959% 7.154%, 100% 7.535%, 100% 92.465%, 99.959% 92.846%, 99.916% 93.22%, 99.848% 93.597%, 99.744% 93.97%, 99.637% 94.343%, 99.485% 94.718%, 99.291% 95.087%, 99.071% 95.454%, 98.793% 95.817%, 98.459% 96.162%, 98.12% 96.511%, 97.696% 96.838%, 97.266% 97.157%, 96.779% 97.464%, 96.26% 97.753%, 95.713% 98.041%, 95.083% 98.297%, 94.445% 98.527%, 93.795% 98.75%, 93.11% 98.959%, 92.383% 99.147%, 91.635% 99.302%, 90.886% 99.458%, 90.096% 99.582%, 89.303% 99.681%, 88.503% 99.769%, 87.692% 99.833%, 86.887% 99.886%, 86.079% 99.93%, 85.266% 99.964%, 84.456% 99.982%, 83.634% 100%, 16.366% 100%, 15.544% 99.982%, 14.734% 99.964%, 13.921% 99.93%, 13.113% 99.886%, 12.308% 99.833%, 11.497% 99.769%, 10.697% 99.681%, 9.904% 99.582%, 9.114% 99.458%, 8.365% 99.302%, 7.617% 99.147%, 6.89% 98.959%, 6.205% 98.75%, 5.555% 98.527%, 4.917% 98.297%, 4.287% 98.041%, 3.74% 97.753%, 3.221% 97.464%, 2.734% 97.157%, 2.304% 96.838%, 1.88% 96.511%, 1.541% 96.162%, 1.207% 95.817%, 0.929% 95.454%, 0.709% 95.087%, 0.515% 94.718%, 0.363% 94.343%, 0.256% 93.97%, 0.152% 93.597%, 0.084% 93.22%, 0.041% 92.846%, 0% 92.465%);
 }
 .phone .screen {
-  position: relative;
-  border-radius: 44px;
+  left: calc(1.3 * var(--u));
+  top: calc(1.3 * var(--u));
+  width: calc(286 * var(--u));
+  height: calc(621.4 * var(--u));
   background: var(--d-ground);
   color: var(--d-ink);
-  padding: 58px 16px 22px;
-  min-height: 600px;
+  padding: calc(58 * var(--u)) calc(16 * var(--u)) calc(22 * var(--u));
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  overflow: hidden;
+  gap: calc(14 * var(--u));
 }
-.phone .island {
+.phone .pbar { position: absolute; left: 0; top: 0; width: 100%; height: calc(42 * var(--u)); color: var(--d-ink); }
+.phone .ptime {
   position: absolute;
-  top: 14px;
-  left: 50%;
-  width: 96px;
-  height: 28px;
-  margin-left: -48px;
-  border-radius: 16px;
-  background: #000000;
-}
-.phone .ptop {
-  position: absolute;
-  top: 18px;
-  left: 30px;
-  font-size: 13px;
+  left: calc(21.5 * var(--u));
+  top: calc(11.1 * var(--u));
+  width: calc(70 * var(--u));
+  height: calc(20 * var(--u));
+  line-height: calc(20 * var(--u));
+  text-align: center;
+  font-size: calc(12 * var(--u));
   font-weight: 600;
-  color: var(--d-ink);
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
+.phone .picons {
+  position: absolute;
+  left: calc(205.45 * var(--u));
+  top: calc(16.6 * var(--u));
+  height: calc(9 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: calc(3.9 * var(--u));
+}
+.phone .picons svg { flex: none; max-width: none; }
+.phone .picons .sig { width: calc(11.7 * var(--u)); height: calc(7.8 * var(--u)); }
+.phone .picons .wifi { width: calc(11.05 * var(--u)); height: calc(7.8 * var(--u)); }
+.phone .picons .batt { width: calc(17.55 * var(--u)); height: calc(8.45 * var(--u)); }
+.picons .sig rect, .picons .wifi .fill, .picons .batt .level { fill: currentColor; }
+.picons .wifi .arc { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.picons .batt .shell { fill: none; stroke: currentColor; stroke-opacity: 0.4; stroke-width: 1.2; }
+.picons .batt .cap { fill: currentColor; fill-opacity: 0.45; }
 .phone .psport {
-  font-size: 14px;
+  font-size: calc(14 * var(--u));
+  line-height: calc(22 * var(--u));
   font-weight: 600;
   color: var(--d-ink-soft);
   text-align: center;
   margin: 0;
 }
-.ptiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ptiles { display: grid; grid-template-columns: 1fr 1fr; gap: calc(12 * var(--u)); }
 .ptile {
   position: relative;
-  height: 232px;
-  border-radius: 24px;
+  height: calc(232 * var(--u));
+  border-radius: calc(24 * var(--u));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: calc(2 * var(--u));
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -660,50 +730,52 @@ a.pill:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .ptile.us { background: rgba(91, 150, 232, 0.22); color: var(--d-us); }
 .ptile.them { background: rgba(224, 131, 80, 0.22); color: var(--d-them); }
 .ptile .lbl {
-  font-size: 12px;
+  font-size: calc(12 * var(--u));
+  line-height: 1.6;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--d-ink-soft);
 }
 .ptile .pts {
-  font-size: 64px;
+  font-size: calc(64 * var(--u));
   font-weight: 800;
   line-height: 1.05;
   min-height: 1.05em;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
 }
-.ptile .ball { width: 20px; height: 20px; }
-.ptile .ball.near { bottom: 14px; }
-.ptile .ball.far { top: 14px; }
-.ptile .ball.left { left: 14px; }
-.ptile .ball.right { right: 14px; }
-.ptile .ball.center { margin-left: -10px; }
-.phone .mini { font-size: 22px; gap: 22px; min-height: 52px; align-items: center; }
+.ptile .ball { width: calc(20 * var(--u)); height: calc(20 * var(--u)); }
+.ptile .ball.near { bottom: calc(14 * var(--u)); }
+.ptile .ball.far { top: calc(14 * var(--u)); }
+.ptile .ball.left { left: calc(14 * var(--u)); }
+.ptile .ball.right { right: calc(14 * var(--u)); }
+.ptile .ball.center { margin-left: calc(-10 * var(--u)); }
+.phone .mini { font-size: calc(22 * var(--u)); line-height: 1.1; gap: calc(22 * var(--u)); min-height: calc(52 * var(--u)); align-items: center; }
 .phone .status {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  font-size: 13px;
+  gap: calc(7 * var(--u));
+  font-size: calc(13 * var(--u));
+  line-height: 1.6;
   color: var(--d-ink-faint);
 }
-.phone .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--d-fresh); }
+.phone .status .dot { width: calc(8 * var(--u)); height: calc(8 * var(--u)); border-radius: 50%; background: var(--d-fresh); }
 .phone .status.off .dot { background: var(--d-ink-faint); }
 .phone .sharestrip {
   margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 16px;
+  gap: calc(10 * var(--u));
+  padding: calc(12 * var(--u)) calc(16 * var(--u));
+  border-radius: calc(16 * var(--u));
   background: var(--d-surface);
   border: 1px solid var(--d-line);
 }
-.phone .ss-lbl { font-size: 13px; font-weight: 600; color: var(--d-ink-soft); }
-.phone .ss-code { font-size: 22px; font-weight: 700; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; color: var(--d-ink); }
+.phone .ss-lbl { font-size: calc(13 * var(--u)); line-height: 1.6; font-weight: 600; color: var(--d-ink-soft); }
+.phone .ss-code { font-size: calc(22 * var(--u)); line-height: 1.6; font-weight: 700; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; color: var(--d-ink); }
 
 /* ── Steps (how it works) ────────────────────────────────────────────── */
 .steps {
@@ -868,6 +940,7 @@ footer .fine { font-size: 0.88rem; color: var(--ink-faint); margin: 0.3rem 0 0; 
 footer .fine a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.15s ease, border-color 0.15s ease; }
 footer .fine a:hover { color: var(--ink); border-bottom-color: var(--ink-faint); }
 footer .fine a:active { opacity: 0.7; }
+footer .fine.credit { margin-top: 1rem; max-width: 56em; }
 
 /* ── Motion (CSS only; nothing moves under prefers-reduced-motion) ────── */
 @media (prefers-reduced-motion: no-preference) {
@@ -879,7 +952,7 @@ footer .fine a:active { opacity: 0.7; }
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    border: 3px solid var(--d-us);
+    border: calc(3 * var(--u)) solid var(--d-us);
     opacity: 0;
     pointer-events: none;
     animation: tapring 2s ease-out infinite;

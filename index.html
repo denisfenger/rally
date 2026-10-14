@@ -2,19 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<!-- KEPT OUT OF SEARCH ON PURPOSE, until the app is released. Remove this tag
-     on every page (index, privacy, terms, support, impressum, board) to let
-     the site be indexed. A robots.txt in this repo would do NOTHING: crawlers
-     read robots.txt at the DOMAIN root (denisfenger.github.io/robots.txt),
-     which belongs to the user-site repo, not to this project page. The
-     per-page meta tag is the mechanism that works, and it does NOT make the
-     pages unreachable: the shipped app links privacy, terms and support, and
-     App Review has to be able to fetch them. -->
-<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rally</title>
 <meta name="description" content="Rally is the watch-first score keeper for padel, tennis, pickleball, table tennis, badminton, squash and volleyball. One tap on the wrist per point; Rally keeps games, sets, serves and side switches straight.">
-<meta property="og:title" content="rally">
+<meta property="og:title" content="Rally">
 <meta property="og:description" content="The watch-first score keeper for padel, tennis, pickleball, table tennis, badminton, squash and volleyball.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0B1622">
@@ -24,7 +15,17 @@
 <body>
 
 <!-- 01 Hero: court night. The promise in one line and a watch you can tap.
-     The watch is drawn in CSS from the STYLE_GUIDE watch contract: score
+     THE DEVICE IS APPLE'S OWN PRODUCT IMAGE (release day, Denis 2026-10-01;
+     site/README.md "Apple's artwork"): Apple Watch Series 11, 46 mm, Jet
+     Black aluminium with the Black Sport Band, the App Store slides' finish,
+     Apple's PNG from Design Resources untouched (560 x 880, shown at 280 x
+     440, so 2x). Whole, upright, uniformly scaled, no shadow, nothing over
+     it; the score page lies UNDER its transparent display, clipped to
+     Apple's display shape (devices.json ui.box and ui.clipPath), laid out
+     at the 46 mm display's own 208 x 248 pt (the slides' geometry: the
+     37 pt status band, two 97 x 151 pt tiles, the bottom row at 192 pt),
+     in units of --u so the whole device scales as one below 280 px.
+     The score page follows the STYLE_GUIDE watch contract: score
      tiles are the buttons (left = us in court blue, right = them in clay),
      the optic ball on the serving tile, viewer-perspective (ours at the near
      edge below the number on the serve court side; theirs at the far edge
@@ -75,9 +76,14 @@
         <h1 class="display">One tap<br>per point.</h1>
         <p class="lead">Rally scores padel, tennis, pickleball, table tennis, badminton, squash and volleyball from your wrist. Tap <span class="us">your side</span> or <span class="them">theirs</span>; games, sets, serves and side switches take care of themselves, and the match counts as a workout.</p>
         <div class="cta">
-          <!-- Swap this for Apple's official "Download on the App Store" badge
-               at release. Apple requires its own artwork; do not redraw it. -->
-          <span class="pill static"><span class="dot"></span>Coming to the App Store</span>
+          <!-- Apple's "Download on the App Store" badge, en-us black, the file
+               from Apple's marketing tools as served (app-store-badge.svg,
+               byte for byte; never redrawn, recoloured, angled or animated).
+               56 px high (Apple's minimum onscreen is 40), the clear space of
+               a quarter of its height around it stays empty, and its hover
+               and pressed rings are drawn outside that space. One badge on
+               the page. -->
+          <a class="appstore" href="https://apps.apple.com/app/id6807145117"><img src="app-store-badge.svg" width="168" height="56" alt="Download on the App Store"></a>
           <a class="quiet" href="board/">Watching a shared match? Enter your code</a>
         </div>
         <p class="note">No account needed to play. Following a shared match is always free.</p>
@@ -85,10 +91,7 @@
 
       <div class="demo">
         <div class="watch" id="watch" aria-label="Rally on Apple Watch, interactive demo">
-          <div class="strap top" aria-hidden="true"></div>
-          <div class="case">
-            <div class="crown" aria-hidden="true"></div>
-            <div class="sidebtn" aria-hidden="true"></div>
+          <div class="uibox">
             <div class="screen">
               <div class="statusrow" aria-hidden="true"><span class="band-lbl" id="wBand">Padel</span><span class="clock">9:41</span></div>
               <div class="tiles">
@@ -131,7 +134,7 @@
               </div>
             </div>
           </div>
-          <div class="strap bottom" aria-hidden="true"></div>
+          <img class="hw" src="devices/apple-watch-series-11-46mm-jet-black.png" width="560" height="880" alt="" draggable="false">
         </div>
         <div class="demo-foot">
           <p class="rulesline" id="wRules">padel · golden point · side choice on · best of 3</p>
@@ -203,8 +206,14 @@
 </section>
 
 <!-- 04 Live sharing: chalk ground, the courtside Board on an iPhone. The
-     Board carries the watch semantics exactly (STYLE_GUIDE): us left in
-     court blue, them right in clay, the ball viewer-perspective, the sets
+     device is Apple's own product image (iPhone 18 Pro Max, Black, the App
+     Store slides' file), a uniform 13/30 copy of Apple's 1470 x 3000 PNG
+     (637 x 1300, shown at 318.5 x 650, so 2x), with the Board under its
+     transparent display, clipped to Apple's display shape; the image draws
+     the real Dynamic Island, so the screen draws none and centres the status
+     bar on it (time, full signal, full Wi-Fi, full battery: Apple's status
+     bar rule). The Board carries the watch semantics exactly (STYLE_GUIDE):
+     us left in court blue, them right in clay, the ball viewer-perspective, the sets
      mini-table, the status line, the share strip. It renders the same
      state as the watch in the hero, and its tiles score too (the phone
      doubles as the scorer). It is the MIRROR of the watch's match (round
@@ -216,29 +225,38 @@
   <div class="wrap wide split flip">
     <div class="demo">
       <div class="phone" id="phone" aria-label="Rally on iPhone, courtside scoreboard">
-        <div class="screen">
-          <div class="island" aria-hidden="true"></div>
-          <div class="ptop" aria-hidden="true"><span class="ptime">9:41</span></div>
-          <p class="psport" id="pRules">Padel · golden point · side choice on · best of 3</p>
-          <div class="ptiles">
-            <div class="ptile us" id="pA" role="button" tabindex="0" aria-label="Point for us">
-              <span class="lbl">Us</span>
-              <span class="pts" id="pPtsA">0</span>
-              <span class="ball" id="pBallA" aria-hidden="true"></span>
+        <div class="uibox">
+          <div class="screen">
+            <div class="pbar" aria-hidden="true">
+              <span class="ptime">9:41</span>
+              <span class="picons">
+                <svg class="sig" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+                <svg class="wifi" viewBox="0 0 17 12"><path class="fill" d="M8.5 11.5l2.4-2.9a3.6 3.6 0 0 0-4.8 0z"/><path class="arc" d="M3.9 6.8a6.6 6.6 0 0 1 9.2 0"/><path class="arc" d="M1.2 3.9a10.4 10.4 0 0 1 14.6 0"/></svg>
+                <svg class="batt" viewBox="0 0 27 13"><rect class="shell" x="0.6" y="0.6" width="22.8" height="11.8" rx="3.6"/><rect class="level" x="2.4" y="2.4" width="19.2" height="8.2" rx="2.2"/><path class="cap" d="M25 4.4v4.2c.9-.3 1.5-1.1 1.5-2.1s-.6-1.8-1.5-2.1z"/></svg>
+              </span>
             </div>
-            <div class="ptile them" id="pB" role="button" tabindex="0" aria-label="Point for them">
-              <span class="lbl">Them</span>
-              <span class="pts" id="pPtsB">0</span>
-              <span class="ball" id="pBallB" aria-hidden="true"></span>
+            <p class="psport" id="pRules">Padel · golden point · side choice on · best of 3</p>
+            <div class="ptiles">
+              <div class="ptile us" id="pA" role="button" tabindex="0" aria-label="Point for us">
+                <span class="lbl">Us</span>
+                <span class="pts" id="pPtsA">0</span>
+                <span class="ball" id="pBallA" aria-hidden="true"></span>
+              </div>
+              <div class="ptile them" id="pB" role="button" tabindex="0" aria-label="Point for them">
+                <span class="lbl">Them</span>
+                <span class="pts" id="pPtsB">0</span>
+                <span class="ball" id="pBallB" aria-hidden="true"></span>
+              </div>
             </div>
-          </div>
-          <div class="mini" id="pMini" aria-label="Games by set"></div>
-          <div class="status" id="pStatus"><span class="dot"></span><span id="pStatusText">Live</span></div>
-          <div class="sharestrip" aria-label="Share strip">
-            <span class="ss-lbl">Sharing live</span>
-            <span class="ss-code">483 912</span>
+            <div class="mini" id="pMini" aria-label="Games by set"></div>
+            <div class="status" id="pStatus"><span class="dot"></span><span id="pStatusText">Live</span></div>
+            <div class="sharestrip" aria-label="Share strip">
+              <span class="ss-lbl">Sharing live</span>
+              <span class="ss-code">483 912</span>
+            </div>
           </div>
         </div>
+        <img class="hw" src="devices/iphone-18-pro-max-black.png" width="637" height="1300" alt="" draggable="false">
       </div>
       <p class="hint">The same match as the watch above. Tap here to score too.</p>
     </div>
@@ -328,6 +346,11 @@
     </nav>
     <p class="fine">Questions? <a href="mailto:rally@softailed.com">rally@softailed.com</a></p>
     <p class="fine">&copy; 2026 Fenger Digital GmbH</p>
+    <!-- Apple's credit line (App Store marketing guidelines, Legal
+         Requirements: once per website, where the legal notice is; with
+         the badge, credit Apple and the Apple logo): the trademarks this
+         page shows, the international form without symbols. -->
+    <p class="fine credit">Apple, the Apple logo, Apple Watch, iPhone and iPad are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc., registered in the U.S. and other countries.</p>
   </div>
 </footer>
 

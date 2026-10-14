@@ -52,6 +52,10 @@
      speaks English or German by the browser's language; ?lang=de|en
      overrides it (the verifier uses that).
      AN X LEAVES (decision 5): back to the code entry, nothing kept.
+     THE FOOTER LINK (release day): "Scored with Rally" opens the App Store
+     listing (apps.apple.com/app/id6807145117) in a new tab, so a follower
+     reaches the app without leaving the live score. It is a link, not a
+     request: nothing loads from Apple until someone taps it.
      The anon key is public by design: it grants nothing, the table is
      service-role-only and every mutation goes through edge functions.
      The app links here through boardUrl() in src/links.ts; the URL shape is
@@ -61,7 +65,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Rally live score</title>
@@ -424,7 +427,7 @@
     </div>
   </section>
 </main>
-<footer><a href="../" id="scoredWith">Scored with Rally</a></footer>
+<footer><a href="https://apps.apple.com/app/id6807145117" id="scoredWith" target="_blank" rel="noopener">Scored with Rally</a></footer>
 <script>
 (function () {
   var SUPABASE_URL = "https://cdfssiiyuvdxsfgkjdxz.supabase.co";
