@@ -625,12 +625,57 @@
         tabletennis: "Ténis de mesa", badminton: "Badminton", squash: "Squash",
         volleyball: "Voleibol", beachvolleyball: "Voleibol de praia",
         racquetball: "Raquetebol", custom: "Personalizado" }
+    },
+    nl: {
+      live: "Live", reconnecting: "Verbinden", final: "Eindstand", ended: "Afgelopen",
+      teamA: "Team A", teamB: "Team B",
+      won: "Winst voor {name}", matchEnded: "Wedstrijd afgelopen",
+      sharingEnded: "Delen gestopt",
+      sharingEndedHint: "De host deelt niet meer. Dit is de laatst ontvangen score.",
+      discardedHint: "De host heeft deze wedstrijd verwijderd.",
+      serves: "{name} serveert", pair: "{a} & {b}",
+      swap: "Kanten omdraaien", leave: "Verlaat de wedstrijd", code: "Code {code}",
+      joinTitle: "Volg een live wedstrijd", joinHint: "Voer de zescijferige code van de host\u00A0in.",
+      joinButton: "Volg", codeLabel: "Code",
+      errDigits: "De code heeft 6 cijfers.",
+      errNotFound: "Geen live wedstrijd met deze code.",
+      errTooMany: "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+      errNetwork: "Kan de scoredienst niet bereiken. Probeer het opnieuw.",
+      title: "Livescore van Rally", sets: "Sets",
+      advantage: "Voordeel", secondDeuce: "Tweede keer gelijk", decidingPoint: "Beslissend punt",
+      sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
+        tabletennis: "Tafeltennis", badminton: "Badminton", squash: "Squash",
+        volleyball: "Volleybal", beachvolleyball: "Beachvolleybal",
+        racquetball: "Racquetball", custom: "Aangepast" }
+    },
+    sv: {
+      live: "Live", reconnecting: "Återansluter", final: "Slutresultat", ended: "Avslutad",
+      teamA: "Lag A", teamB: "Lag B",
+      won: "{name} vann", matchEnded: "Matchen är slut",
+      sharingEnded: "Delning avslutad",
+      sharingEndedHint: "Värden slutade dela. Det här är den senast mottagna ställningen.",
+      discardedHint: "Värden slängde den här matchen.",
+      serves: "{name} servar", pair: "{a} & {b}",
+      swap: "Byt plats", leave: "Lämna matchen", code: "Kod {code}",
+      joinTitle: "Följ en livematch", joinHint: "Ange värdens 6‑siffriga kod.",
+      joinButton: "Följ", codeLabel: "Kod",
+      errDigits: "Koden har 6 siffror.",
+      errNotFound: "Ingen livematch med den här koden.",
+      errTooMany: "För många försök. Vänta några minuter och försök igen.",
+      errNetwork: "Det gick inte att nå resultattjänsten. Försök igen.",
+      title: "Ställningen live i Rally", sets: "Set",
+      advantage: "Fördel", secondDeuce: "Lika för andra gången", decidingPoint: "Avgörande poäng",
+      sports: { padel: "Padel", tennis: "Tennis", pickleball: "Pickleball",
+        tabletennis: "Bordtennis", badminton: "Badminton", squash: "Squash",
+        volleyball: "Volleyboll", beachvolleyball: "Beachvolley",
+        racquetball: "Racketboll", custom: "Anpassad" }
     }
   };
   var params = new URLSearchParams(location.search);
   // ?lang= first, then the browser's languages in order (the primary
   // subtag: pt-BR reads the one Portuguese table, es-MX the Spanish one),
-  // else English. Round 31 verify: all six launch languages.
+  // else English. Round 31 verify: all six launch languages; Swedish and
+  // Dutch since round 33 (item 11).
   var lang = (function () {
     var forced = String(params.get("lang") || "").toLowerCase();
     if (Object.prototype.hasOwnProperty.call(TEXT, forced)) return forced;
