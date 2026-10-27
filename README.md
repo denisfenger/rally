@@ -129,7 +129,7 @@ Store" pill until Rally 1.0 was approved (Denis, 2026-10-01); the
 release-day push swapped both, with noindex dropped, in one commit.
 Sources: App Store Marketing Guidelines (badges, product images, legal
 requirements) and the slides' notes on the device images
-(`../Rally-scratch/2026-10-01/rally-slides/assets/rules.md` and
+(`../Matchpoint-scratch/2026-10-01/rally-slides/assets/rules.md` and
 `devices.json`, outside this repo).
 
 - THE BADGE (`app-store-badge.svg`): Apple's "Download on the App Store"
