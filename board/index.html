@@ -669,13 +669,35 @@
         tabletennis: "Bordtennis", badminton: "Badminton", squash: "Squash",
         volleyball: "Volleyboll", beachvolleyball: "Beachvolley",
         racquetball: "Racketboll", custom: "Anpassad" }
+    },
+    ru: {
+      live: "Live", reconnecting: "Переподключение", final: "Итоговый счет", ended: "Завершено",
+      teamA: "Команда А", teamB: "Команда Б",
+      won: "Победа: {name}", matchEnded: "Матч завершен",
+      sharingEnded: "Трансляция завершена",
+      sharingEndedHint: "Трансляция остановлена. Это последний полученный счет.",
+      discardedHint: "Этот матч завершили без сохранения.",
+      serves: "Подает {name}", pair: "{a} и {b}",
+      swap: "Поменять местами", leave: "Выйти из матча", code: "Код {code}",
+      joinTitle: "Следить за матчем онлайн", joinHint: "Введите 6-значный код матча.",
+      joinButton: "Смотреть", codeLabel: "Код",
+      errDigits: "В коде 6\u00A0цифр.",
+      errNotFound: "Нет матча онлайн с\u00A0таким кодом.",
+      errTooMany: "Слишком много попыток. Повторите через несколько минут.",
+      errNetwork: "Не удалось связаться с сервером. Повторите попытку.",
+      title: "Rally: счет онлайн", sets: "Сеты",
+      advantage: "Преимущество", secondDeuce: "Второе ровно", decidingPoint: "Решающее очко",
+      sports: { padel: "Падел", tennis: "Теннис", pickleball: "Пиклбол",
+        tabletennis: "Настольный теннис", badminton: "Бадминтон", squash: "Сквош",
+        volleyball: "Волейбол", beachvolleyball: "Пляжный волейбол",
+        racquetball: "Ракетбол", custom: "Свои правила" }
     }
   };
   var params = new URLSearchParams(location.search);
   // ?lang= first, then the browser's languages in order (the primary
   // subtag: pt-BR reads the one Portuguese table, es-MX the Spanish one),
   // else English. Round 31 verify: all six launch languages; Swedish and
-  // Dutch since round 33 (item 11).
+  // Dutch since round 33 (item 11), Russian since item 24.
   var lang = (function () {
     var forced = String(params.get("lang") || "").toLowerCase();
     if (Object.prototype.hasOwnProperty.call(TEXT, forced)) return forced;
